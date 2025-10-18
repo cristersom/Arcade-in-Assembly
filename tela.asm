@@ -15,8 +15,7 @@
               
     TAM_MSG equ $-msg 
       
-   nomes     db '        Cristersom Simionato    ', CR, NL
-             db '          Wellinton Sartori     ', CR, NL
+    nomes    db 'Cristersom Simionato, Wellinton Sartori', CR, NL
              db '              [ Jogar ]', CR, NL
              db '                Sair' 
               

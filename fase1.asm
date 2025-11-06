@@ -1,0 +1,417 @@
+; fase1.asm  (somente c?digo)
+.code
+
+; fase1_inicio: executa o loop principal do jogo
+fase1_inicio proc
+    push ax
+    push bx
+    push cx
+    push dx
+    push si
+    push di
+    push bp
+    push es
+
+    ; ====== TELA PRETA ======
+    mov ax, 0A000h
+    mov es, ax
+    xor di, di
+    mov al, 0
+    mov cx, 320*200
+    rep stosb
+
+    ; ====== IMPRIMIR TEXTO ======
+    mov ax, @data
+    mov ds, ax
+
+    mov si, OFFSET msg_fase1
+    mov dh, 9          ; linha inicial da tela (vertical)
+    
+.PrintLine:
+    push si            ; salvar posição atual da string
+    xor cx, cx         ; contador de caracteres da linha
+
+.CountChars:
+    lodsb
+    cmp al, CR
+    je .GotLineLength
+    cmp al, 0
+    je .DonePrint
+    inc cx
+    jmp .CountChars
+
+.GotLineLength:
+    ; calcular coluna inicial para centralizar
+    mov bx, 40         ; largura da tela em caracteres (aprox 80/2)
+    sub bx, cx
+    shr bx, 1          ; bx = coluna inicial
+
+    ; reposicionar cursor
+    mov ah, 02h
+    mov bh, 0
+    mov dh, dh         ; linha vertical
+    mov dl, bl         ; coluna horizontal
+    int 10h
+
+    ; imprimir a linha
+    pop si             ; restaurar posição da linha
+.PrintChars:
+    lodsb
+    cmp al, CR
+    je .NextLine
+    mov ah, 0Eh
+    mov bh, 0
+    mov bl, 4          ; cor
+    int 10h
+    jmp .PrintChars
+
+.NextLine:
+    inc dh             ; próxima linha vertical
+    lodsb              ; pular LF
+    jmp .PrintLine
+
+.DonePrint:
+
+    ; ====== DELAY 4 SEGUNDOS ======
+    mov ax, 0040h
+    mov es, ax
+    mov bx, es:[006Ch]
+    add bx, 73   ; ≈ 4 segundos
+
+.WaitLoop:
+    cmp es:[006Ch], bx
+    jl .WaitLoop
+
+    ; ====== APAGAR O TEXTO ======
+    mov ax, 0A000h
+    mov es, ax
+    xor di, di
+    mov al, 0
+    mov cx, 320*200
+    rep stosb
+
+    ; ====== CONTINUA JOGO ======
+    call desenha_superficie_fase1
+
+
+    ; Desenha o jogador na posicao inicial
+    mov ax, player_y
+    mov dx, player_x
+    call calcula_posicao
+    mov bx, OFFSET nave_cacador
+    call desenha_fantasma
+
+JOGO_LOOP:
+    ; 1. Apaga o jogador da posicao antiga
+    mov ax, player_y
+    mov dx, player_x
+    call calcula_posicao
+    mov bx, OFFSET sprite_vazio
+    call desenha_fantasma  
+
+    ; 1a. Apaga Inimigos (Apenas se estiverem na tela: 0 <= X <= 319)
+    mov ax, enemy1_x
+    cmp ax, 0
+    jl .enemy1_erase_skip 
+    cmp ax, 319
+    jg .enemy1_erase_skip 
+    mov ax, enemy1_y
+    mov dx, enemy1_x
+    call calcula_posicao
+    mov bx, OFFSET sprite_vazio
+    call desenha_fantasma
+    
+  
+.enemy1_erase_skip:
+
+    mov ax, enemy2_x
+    cmp ax, 0
+    jl .enemy2_erase_skip
+    cmp ax, 319
+    jg .enemy2_erase_skip
+    mov ax, enemy2_y
+    mov dx, enemy2_x
+    call calcula_posicao
+    mov bx, OFFSET sprite_vazio
+    call desenha_fantasma
+.enemy2_erase_skip:
+
+    mov ax, enemy3_x
+    cmp ax, 0
+    jl .enemy3_erase_skip
+    cmp ax, 319
+    jg .enemy3_erase_skip
+    mov ax, enemy3_y
+    mov dx, enemy3_x
+    call calcula_posicao
+    mov bx, OFFSET sprite_vazio
+    call desenha_fantasma
+.enemy3_erase_skip:
+
+    ; 1b. Apaga o Tiro (Se ativo)
+    cmp tiro_ativo, 1
+    jne .tiro_erase_skip
+    mov ax, tiro_y
+    mov dx, tiro_x
+    mov cl, 0 ; Cor preta
+    call desenha_pixel
+.tiro_erase_skip:
+
+    ; 2. Le o teclado
+    mov ah, 01h
+    int 16h
+    jnz .processa_teclado
+    jmp .continua_loop
+
+.processa_teclado:
+    mov ah, 00h
+    int 16h
+
+    cmp al, 0
+    jne .checar_tecla_disparo
+
+    ; Processa teclas especiais (Setas)
+    cmp ah, 48H
+    je .move_cima
+    cmp ah, 50H
+    je .move_baixo
+    cmp ah, 4BH
+    je .move_esquerda
+    cmp ah, 4DH
+    je .move_direita
+    jmp .continua_loop
+
+.checar_tecla_disparo:
+    cmp al, ' '
+    jne .continua_loop
+
+    cmp tiro_ativo, 0
+    jne .continua_loop
+
+    mov tiro_ativo, 1
+    mov ax, player_y
+    add ax, 6
+    mov tiro_y, ax
+    mov ax, player_x
+    add ax, 17
+    mov tiro_x, ax
+    jmp .continua_loop
+
+.move_cima:
+    mov ax, player_y
+    cmp ax, MIN_Y
+    jle .continua_loop
+    dec player_y
+    jmp .continua_loop
+.move_baixo:
+    mov ax, player_y
+    cmp ax, MAX_Y
+    jge .continua_loop
+    inc player_y
+    jmp .continua_loop
+.move_esquerda:
+    mov ax, player_x
+    cmp ax, MIN_X
+    jle .continua_loop
+    dec player_x
+    jmp .continua_loop
+.move_direita:
+    mov ax, player_x
+    cmp ax, MAX_X
+    jge .continua_loop
+    inc player_x
+    jmp .continua_loop
+
+.continua_loop:
+
+    ; 2a. Atualiza Coordenadas dos Inimigos
+    dec enemy1_x
+    dec enemy2_x
+    dec enemy3_x
+
+    ; 2b. Checa Limite (Apenas no 'leader', enemy3)
+    mov ax, enemy3_x
+    cmp ax, -17
+    jg .enemy_reset_skip
+
+    mov enemy1_x, 340
+    mov enemy2_x, 380
+    mov enemy3_x, 420
+.enemy_reset_skip:
+
+    ; 2c. Atualiza Timer
+    dec timer_counter
+    cmp timer_counter, 0
+    jne .pula_timer_update
+
+    mov timer_counter, 67
+    mov al, tempo_restante
+    cmp al, 0
+    je .pula_timer_update
+    dec tempo_restante
+    mov al, tempo_restante
+    xor ah, ah
+    mov bl, 10
+    div bl
+    add al, 30h
+    add ah, 30h
+    mov [campo4], al
+    mov [campo4+1], ah
+    call atualiza_tempo_hud
+.pula_timer_update:
+
+    ; 2d. Atualiza Tiro (Se ativo)
+    cmp tiro_ativo, 1
+    jne .tiro_update_skip
+    add tiro_x, 2
+
+    cmp tiro_x, 319
+    jle .tiro_update_skip
+    mov tiro_ativo, 0
+.tiro_update_skip:
+
+    ; 3. Desenha o jogador na nova posicao
+    mov ax, player_y
+    mov dx, player_x
+    call calcula_posicao
+    mov bx, OFFSET nave_cacador
+    call desenha_fantasma
+
+    ; 3a. Desenha Inimigos (Apenas se estiverem na tela: 0 <= X <= 319)
+    mov ax, enemy1_x
+    cmp ax, 0
+    jl .enemy1_draw_skip
+    cmp ax, 319
+    jg .enemy1_draw_skip
+    mov ax, enemy1_y
+    mov dx, enemy1_x
+    call calcula_posicao
+    mov bx, OFFSET nave1
+    call desenha_fantasma
+.enemy1_draw_skip:
+
+    mov ax, enemy2_x
+    cmp ax, 0
+    jl .enemy2_draw_skip
+    cmp ax, 319
+    jg .enemy2_draw_skip
+    mov ax, enemy2_y
+    mov dx, enemy2_x
+    call calcula_posicao
+    mov bx, OFFSET nave2
+    call desenha_fantasma
+.enemy2_draw_skip:
+
+    mov ax, enemy3_x
+    cmp ax, 0
+    jl .enemy3_draw_skip
+    cmp ax, 319
+    jg .enemy3_draw_skip
+    mov ax, enemy3_y
+    mov dx, enemy3_x
+    call calcula_posicao
+    mov bx, OFFSET nave3
+    call desenha_fantasma
+.enemy3_draw_skip:
+
+    ; 3b. Desenha o Tiro (Se ativo)
+    cmp tiro_ativo, 1
+    jne .tiro_draw_skip
+    mov ax, tiro_y
+    mov dx, tiro_x
+    mov cl, 0Fh ; Cor Branca
+    call desenha_pixel
+.tiro_draw_skip:
+
+    ; 4. Delay
+    mov ah, 86h
+    mov cx, game_delay_cx
+    mov dx, game_delay_dx
+    int 15h
+
+    ; 5. Checa se o tempo acabou (APOS desenhar)
+    mov al, tempo_restante
+    cmp al, 0
+    je .fim_de_jogo_timer
+
+    ; 6. Repete
+    jmp JOGO_LOOP
+
+.fim_de_jogo_timer:
+    ; O jogo congela aqui, com o ultimo frame na tela.
+    ; Espera qualquer tecla
+    mov ah, 00h
+    int 16h
+    ; ao terminar, volta ao chamador (main), que reabre o menu
+    ; podemos redefinir valores iniciais se quiser (opcional)
+    pop es
+    pop bp
+    pop di
+    pop si
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    ret
+
+atualiza_tempo_hud proc
+    push ax
+    push bp
+    push cx
+    push dx
+    push si
+
+    mov bp,OFFSET campo4
+    mov ah,13h
+    mov al,0h
+    xor bh,bh
+    mov bl,2
+    mov cx,TAM_MSG6
+    mov dh,0
+    mov dl,78
+    int 10h
+
+    pop si
+    pop dx
+    pop cx
+    pop bp
+    pop ax
+    ret
+atualiza_tempo_hud endp
+
+desenha_superficie_fase1 proc
+    push ax
+    push cx
+    push di
+    push es
+
+    mov ax, 0A000h
+    mov es, ax
+
+    mov ax, 180
+    mov dx, 0
+    call calcula_posicao
+
+    mov cx, 6400
+    mov al, 1
+    rep stosb
+
+    pop es
+    pop di
+    pop cx
+    pop ax
+    ret
+desenha_superficie_fase1 endp
+
+    pop es
+    pop bp
+    pop di
+    pop si
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    ret
+fase1_inicio endp
+
+; fim fase1.asm

@@ -14,14 +14,14 @@ desenha_fantasma proc
     mov ES, AX
     mov DX, 13
 laco_fantasma:
-    mov CX, 17
+    mov CX, 29
 LACO_LINHA:
     mov AL, [BX]
     stosb
     inc BX
     loop LACO_LINHA
     mov ax, 320
-    sub ax, 17
+    sub ax, 29
     add DI, ax
     dec DX
     jnz laco_fantasma
@@ -66,7 +66,7 @@ LACO_LINHA2:
     pop bx
     pop ax
     ret
-    desenha_vida endp
+desenha_vida endp
 
 
 calcula_posicao proc
@@ -239,12 +239,6 @@ MenuLoop:
     mov bx, OFFSET sprite_vazio
     call desenha_fantasma
 
-    mov ax, meteoro2_y
-    mov dx, meteoro2_x
-    call calcula_posicao
-    mov bx, OFFSET sprite_vazio
-    call desenha_fantasma
-
     mov ax, nave_aliada_y
     mov dx, nave_aliada_x
     call calcula_posicao
@@ -257,52 +251,27 @@ MenuLoop:
     mov bx, OFFSET sprite_vazio
     call desenha_fantasma
 
-    mov ax, nave_alien2_y
-    mov dx, nave_alien2_x
-    call calcula_posicao
-    mov bx, OFFSET sprite_vazio
-    call desenha_fantasma
-
-    mov ax, nave3_y
-    mov dx, nave3_x
-    call calcula_posicao
-    mov bx, OFFSET sprite_vazio
-    call desenha_fantasma
-
-    mov ax, nave4_y
-    mov dx, nave4_x
-    call calcula_posicao
-    mov bx, OFFSET sprite_vazio
-    call desenha_fantasma
-
     mov ax, direcao_atual
     add nave_aliada_x, ax
     neg ax
     add meteoro_x, ax
-    add meteoro2_x, ax
-
+    
     mov ax, direcao_atual2
     add nave_alien_x, ax
-    neg ax
-    add nave_alien2_x, ax
 
-    mov al, direcao_aliada_y
-    cbw
-    add nave_aliada_y, ax
+    ; mov al, direcao_aliada_y
+    ; cbw
+    ;add nave_aliada_y, ax
 
-    cmp nave_alien_x, 303
+    cmp nave_alien_x, 290
     jge .inverter_alien
     cmp nave_alien_x, 0
     jle .inverter_alien
-    cmp nave_alien2_x, 303
-    jge .inverter_alien
-    cmp nave_alien2_x, 0
-    jle .inverter_alien
 
-    cmp nave_aliada_y, 81
-    jle .inverter_aliada_y
-    cmp nave_aliada_y, 95
-    jge .inverter_aliada_y
+    ;cmp nave_aliada_y, 81
+    ;  jle .inverter_aliada_y
+    ;cmp nave_aliada_y, 95
+    ;jge .inverter_aliada_y
 
     jmp .desenhar_local
 
@@ -312,20 +281,14 @@ MenuLoop:
     mov direcao_atual2, ax
     jmp .desenhar_local
 
-.inverter_aliada_y:
-    mov al, direcao_aliada_y
-    neg al
-    mov direcao_aliada_y, al
+    ;.inverter_aliada_y:
+    ; mov al, direcao_aliada_y
+    ;neg al
+    ; mov direcao_aliada_y, al
 
 .desenhar_local:
     mov ax, meteoro_y
     mov dx, meteoro_x
-    call calcula_posicao
-    mov bx, OFFSET nave2
-    call desenha_fantasma
-
-    mov ax, meteoro2_y
-    mov dx, meteoro2_x
     call calcula_posicao
     mov bx, OFFSET nave2
     call desenha_fantasma
@@ -340,24 +303,6 @@ MenuLoop:
     mov dx, nave_alien_x
     call calcula_posicao
     mov bx, OFFSET nave1
-    call desenha_fantasma
-
-    mov ax, nave_alien2_y
-    mov dx, nave_alien2_x
-    call calcula_posicao
-    mov bx, OFFSET nave1
-    call desenha_fantasma
-
-    mov ax, nave3_y
-    mov dx, nave3_x
-    call calcula_posicao
-    mov bx, OFFSET nave3
-    call desenha_fantasma
-
-    mov ax, nave4_y
-    mov dx, nave4_x
-    call calcula_posicao
-    mov bx, OFFSET nave3
     call desenha_fantasma
 
     mov ah, 86h

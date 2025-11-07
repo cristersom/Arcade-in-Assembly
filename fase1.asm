@@ -1,4 +1,4 @@
-; fase1.asm  (somente c?digo)
+; fase1.asm
 .code
 
 ; fase1_inicio: executa o loop principal do jogo
@@ -28,7 +28,7 @@ fase1_inicio proc
     mov dh, 9          ; linha inicial da tela (vertical)
     
 .PrintLine:
-    push si            ; salvar posição atual da string
+    push si            ; salvar posi??o atual da string
     xor cx, cx         ; contador de caracteres da linha
 
 .CountChars:
@@ -54,7 +54,7 @@ fase1_inicio proc
     int 10h
 
     ; imprimir a linha
-    pop si             ; restaurar posição da linha
+    pop si             ; restaurar posi??o da linha
 .PrintChars:
     lodsb
     cmp al, CR
@@ -66,7 +66,7 @@ fase1_inicio proc
     jmp .PrintChars
 
 .NextLine:
-    inc dh             ; próxima linha vertical
+    inc dh             ; pr?xima linha vertical
     lodsb              ; pular LF
     jmp .PrintLine
 
@@ -76,7 +76,7 @@ fase1_inicio proc
     mov ax, 0040h
     mov es, ax
     mov bx, es:[006Ch]
-    add bx, 73   ; ≈ 4 segundos
+    add bx, 73   ; ? 4 segundos
 
 .WaitLoop:
     cmp es:[006Ch], bx
@@ -91,6 +91,7 @@ fase1_inicio proc
     rep stosb
 
     ; ====== CONTINUA JOGO ======
+    call carrega_hud
     call desenha_superficie_fase1
 
 

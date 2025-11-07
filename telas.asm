@@ -35,6 +35,40 @@ LACO_LINHA:
     ret
 desenha_fantasma endp
 
+desenha_vida proc
+    push ax
+    push bx
+    push dx
+    push cx
+    push di
+    push es
+
+    mov AX, 0A000h
+    mov ES, AX
+    mov DX, 7
+laco_fantasma2:
+    mov CX, 19
+LACO_LINHA2:
+    mov AL, [BX]
+    stosb
+    inc BX
+    loop LACO_LINHA2
+    mov ax, 320
+    sub ax, 19
+    add DI, ax
+    dec DX
+    jnz laco_fantasma2
+
+    pop es
+    pop di
+    pop cx
+    pop dx
+    pop bx
+    pop ax
+    ret
+    desenha_vida endp
+
+
 calcula_posicao proc
     push dx
     push cx
@@ -359,4 +393,74 @@ MenuLoop:
     jmp MenuLoop
 
 menu_principal endp
+
+carrega_hud proc
+   mov AL, 13H
+    mov AH, 0
+    int 10H
+
+    mov ax, @data 
+    mov ds, ax  
+    mov Es, ax   
+
+    mov bp,OFFSET campo1
+    mov ah,13h
+    mov al,0h
+    xor bh,bh
+    mov bl,15
+    mov cx,TAM_MSG3
+    mov dh,0
+    mov dl,0
+    int 10h
+
+    mov bp,OFFSET campo2
+    mov ah,13h
+    mov al,0h
+    xor bh,bh
+    mov bl,15
+    mov cx,TAM_MSG4
+    mov dh,0
+    mov dl,72
+    int 10h
+
+    mov bp,OFFSET campo3
+    mov ah,13h
+    mov al,0h
+    xor bh,bh
+    mov bl,2
+    mov cx,TAM_MSG5
+    mov dh,0
+    mov dl,6
+    int 10h
+
+    mov bp,OFFSET campo4
+    mov ah,13h
+    mov al,0h
+    xor bh,bh
+    mov bl,2
+    mov cx,TAM_MSG6
+    mov dh,0
+    mov dl,78
+    int 10h 
+  
+    mov ax, 0
+    mov dx, 151
+    call calcula_posicao
+    mov bx, OFFSET vidas
+    call desenha_vida
+    
+    mov ax, 0
+    mov dx, 121
+    call calcula_posicao
+    mov bx, OFFSET vidas
+    call desenha_vida
+    
+    mov ax, 0
+    mov dx, 181
+    call calcula_posicao
+    mov bx, OFFSET vidas
+    call desenha_vida
+    
+    ret
+carrega_hud endp
 

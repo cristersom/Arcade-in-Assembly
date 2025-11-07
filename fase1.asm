@@ -282,7 +282,7 @@ JOGO_LOOP:
     mov ax, enemy1_x
     cmp ax, 0
     jl .enemy1_draw_skip
-    cmp ax, 319
+    cmp ax, 291
     jg .enemy1_draw_skip
     mov ax, enemy1_y
     mov dx, enemy1_x
@@ -294,24 +294,24 @@ JOGO_LOOP:
     mov ax, enemy2_x
     cmp ax, 0
     jl .enemy2_draw_skip
-    cmp ax, 319
+    cmp ax, 291
     jg .enemy2_draw_skip
     mov ax, enemy2_y
     mov dx, enemy2_x
     call calcula_posicao
-    mov bx, OFFSET nave2
+    mov bx, OFFSET nave1
     call desenha_fantasma
 .enemy2_draw_skip:
 
     mov ax, enemy3_x
     cmp ax, 0
     jl .enemy3_draw_skip
-    cmp ax, 319
+    cmp ax, 291
     jg .enemy3_draw_skip
     mov ax, enemy3_y
     mov dx, enemy3_x
     call calcula_posicao
-    mov bx, OFFSET nave3
+    mov bx, OFFSET nave1
     call desenha_fantasma
 .enemy3_draw_skip:
 

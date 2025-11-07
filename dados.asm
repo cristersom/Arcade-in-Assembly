@@ -2,7 +2,10 @@
 .data
 
     CR equ 13
-    NL equ 10                       
+    NL equ 10 
+    C equ 0Ch
+    E equ 0Eh
+    
 
     msg      db "                            __   __   " , CR, NL
              db "    ___ ___________ ___ _  / /  / /__ " , CR, NL
@@ -65,6 +68,9 @@
     delay_dx dw 50000 
 
     ; --- VARIAVEIS DA FASE 1 ---
+    qtd_vidas db 3    ; n?mero de vidas do jogador
+    vidas_max db 3    ; m?ximo de vidas
+    
     player_x dw 10  
     player_y dw 91  
 
@@ -163,6 +169,14 @@ nave4 db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
       db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
       db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
       db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+      
+vidas db 1,1,1,1,1,0,0,0Ch,0Ch,0Ch,0Ch,0Ch,0,0Eh,0Eh,0Eh,0,0,0
+      db 0,1,1,1,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0,0Eh,0,0,0Eh,0,0
+      db 0,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0,0Eh,0,0Eh,0,0Eh,0Eh
+      db 0Eh,0Eh,0Eh,0Eh,0Eh,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0,0,0,0,0,0
+      db 0,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch
+      db 0,1,1,1,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0,0
+      db 1,1,1,1,1,0,0,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0Ch,0,0,0,0
  
 msg_fase1    db "   _______   ________  ___", CR, NL
              db "  / __/ _ | / __/ __/ <  /", CR, NL

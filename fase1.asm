@@ -103,6 +103,8 @@ fase1_inicio proc
     call desenha_fantasma
 
 JOGO_LOOP:
+    
+    call desenha_superficie_fase1
     ; 1. Apaga o jogador da posicao antiga
     mov ax, player_y
     mov dx, player_x
@@ -382,30 +384,80 @@ atualiza_tempo_hud endp
 
 desenha_superficie_fase1 proc
     push ax
+    push bx
     push cx
+    push dx
+    push si
     push di
+    push ds
     push es
 
+    mov ax, @data
+    mov ds, ax
+    
     mov ax, 0A000h
     mov es, ax
 
-    mov ax, 180
+    mov ax, 139
     mov dx, 0
     call calcula_posicao
 
-    mov cx, 6400
+    mov cx, 21000
     mov al, 1
     rep stosb
 
-    pop es
+    mov si, OFFSET superficie_fase1      ; início da sprite
+    mov ax, 0A000h
+    mov es, ax
+
+    mov ax, 119                         ; Y inicial
+    mov dx, 0                           ; X inicial
+    call calcula_posicao                ; DI = Y*320 + X
+
+    mov bx, 490                         ; largura total da sprite
+    mov cx, 20                          ; altura da sprite (linhas)
+    mov ax, desloc_superficie
+    mov bp, ax                          ; BP = deslocamento global (backup estável)
+
+linha_loop:
+    push cx                             ; salva contador de linhas
+    push si
+    push di
+
+    mov cx, 320                         ; pixels visíveis por linha
+    mov dx, bp                          ; deslocamento inicial dentro da linha
+    mov ax, dx
+    add si, ax                          ; SI = sprite + deslocamento
+
+coluna_loop:
+    lodsb                               ; lê pixel
+    stosb                               ; escreve na VRAM
+    inc dx                              ; avança deslocamento
+    cmp dx, bx
+    jb skip_reset
+    sub dx, bx                          ; wrap horizontal
+    sub si, bx
+skip_reset:
+    loop coluna_loop
+
     pop di
+    add di, 320                         ; próxima linha da tela
+
+    pop si
+    add si, 490                         ; próxima linha da sprite
     pop cx
-    pop ax
-    ret
-desenha_superficie_fase1 endp
+    loop linha_loop
+
+    mov ax, desloc_superficie
+    inc ax
+    cmp ax, 490
+    jb ok_scroll
+    xor ax, ax
+ok_scroll:
+    mov desloc_superficie, ax
 
     pop es
-    pop bp
+    pop ds
     pop di
     pop si
     pop dx
@@ -413,6 +465,6 @@ desenha_superficie_fase1 endp
     pop bx
     pop ax
     ret
-fase1_inicio endp
+desenha_superficie_fase1 endp
 
 ; fim fase1.asm

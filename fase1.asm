@@ -2,97 +2,10 @@
 .code
 
 ; fase1_inicio: executa o loop principal do jogo
-fase1_inicio proc
-    push ax
-    push bx
-    push cx
-    push dx
-    push si
-    push di
-    push bp
-    push es
-
-    ; ====== TELA PRETA ======
-    mov ax, 0A000h
-    mov es, ax
-    xor di, di
-    mov al, 0
-    mov cx, 320*200
-    rep stosb
-
-    ; ====== IMPRIMIR TEXTO ======
-    mov ax, @data
-    mov ds, ax
-
-    mov si, OFFSET msg_fase1
-    mov dh, 9          ; linha inicial da tela (vertical)
-    
-.PrintLine:
-    push si            ; salvar posi??o atual da string
-    xor cx, cx         ; contador de caracteres da linha
-
-.CountChars:
-    lodsb
-    cmp al, CR
-    je .GotLineLength
-    cmp al, 0
-    je .DonePrint
-    inc cx
-    jmp .CountChars
-
-.GotLineLength:
-    ; calcular coluna inicial para centralizar
-    mov bx, 40         ; largura da tela em caracteres (aprox 80/2)
-    sub bx, cx
-    shr bx, 1          ; bx = coluna inicial
-
-    ; reposicionar cursor
-    mov ah, 02h
-    mov bh, 0
-    mov dh, dh         ; linha vertical
-    mov dl, bl         ; coluna horizontal
-    int 10h
-
-    ; imprimir a linha
-    pop si             ; restaurar posi??o da linha
-.PrintChars:
-    lodsb
-    cmp al, CR
-    je .NextLine
-    mov ah, 0Eh
-    mov bh, 0
-    mov bl, 4          ; cor
-    int 10h
-    jmp .PrintChars
-
-.NextLine:
-    inc dh             ; pr?xima linha vertical
-    lodsb              ; pular LF
-    jmp .PrintLine
-
-.DonePrint:
-
-    ; ====== DELAY 4 SEGUNDOS ======
-    mov ax, 0040h
-    mov es, ax
-    mov bx, es:[006Ch]
-    add bx, 73   ; ? 4 segundos
-
-.WaitLoop:
-    cmp es:[006Ch], bx
-    jl .WaitLoop
-
-    ; ====== APAGAR O TEXTO ======
-    mov ax, 0A000h
-    mov es, ax
-    xor di, di
-    mov al, 0
-    mov cx, 320*200
-    rep stosb
-
+fase1 proc
     ; ====== CONTINUA JOGO ======
     call carrega_hud
-    call desenha_superficie_fase1
+    call desenha_superficie_fase
 
 
     ; Desenha o jogador na posicao inicial
@@ -100,57 +13,63 @@ fase1_inicio proc
     mov dx, player_x
     call calcula_posicao
     mov bx, OFFSET nave_cacador
-    call desenha_fantasma
+    call desenha_13x29
 
 JOGO_LOOP:
     
-    call desenha_superficie_fase1
+    call desenha_superficie_fase
     ; 1. Apaga o jogador da posicao antiga
-    mov ax, player_y
-    mov dx, player_x
-    call calcula_posicao
-    mov bx, OFFSET sprite_vazio
-    call desenha_fantasma  
-
+   
     ; 1a. Apaga Inimigos (Apenas se estiverem na tela: 0 <= X <= 319)
-    mov ax, enemy1_x
-    cmp ax, 0
-    jl .enemy1_erase_skip 
-    cmp ax, 319
-    jg .enemy1_erase_skip 
     mov ax, enemy1_y
     mov dx, enemy1_x
-    call calcula_posicao
-    mov bx, OFFSET sprite_vazio
-    call desenha_fantasma
-    
-  
-.enemy1_erase_skip:
+    cmp dx, 0
+    je .sprite_full
+    add dx, 28
+    call sprite_coluna
 
-    mov ax, enemy2_x
-    cmp ax, 0
-    jl .enemy2_erase_skip
-    cmp ax, 319
-    jg .enemy2_erase_skip
+.enemy2:    
     mov ax, enemy2_y
     mov dx, enemy2_x
-    call calcula_posicao
-    mov bx, OFFSET sprite_vazio
-    call desenha_fantasma
-.enemy2_erase_skip:
+    cmp dx, 0
+    je .sprite_full
+    add dx, 28
+    call sprite_coluna
 
-    mov ax, enemy3_x
-    cmp ax, 0
-    jl .enemy3_erase_skip
-    cmp ax, 319
-    jg .enemy3_erase_skip
+.enemy3:    
     mov ax, enemy3_y
     mov dx, enemy3_x
+    cmp dx, 0
+    je .sprite_full
+    add dx, 28
+    call sprite_coluna
+    jmp .skip
+ 
+sprite_coluna proc
+   
+    call calcula_posicao
+    mov bx, OFFSET sprite_coluna_vazia
+    call desenha_coluna
+    ret
+sprite_coluna endp
+
+sprite_linha proc
+   
+    call calcula_posicao
+    mov bx, OFFSET sprite_linha_vazia
+    call desenha_linha
+    ret
+    sprite_linha endp
+
+.sprite_full:    
     call calcula_posicao
     mov bx, OFFSET sprite_vazio
-    call desenha_fantasma
-.enemy3_erase_skip:
-
+    call desenha_13x29
+    cmp enemy1_x, 0
+    je .enemy2
+    cmp enemy2_x, 0
+    je .enemy3
+.skip:
     ; 1b. Apaga o Tiro (Se ativo)
     cmp tiro_ativo, 1
     jne .tiro_erase_skip
@@ -205,41 +124,84 @@ JOGO_LOOP:
     cmp ax, MIN_Y
     jle .continua_loop
     dec player_y
+    mov rastro, 1
     jmp .continua_loop
 .move_baixo:
     mov ax, player_y
     cmp ax, MAX_Y
     jge .continua_loop
     inc player_y
+    mov rastro, 2
     jmp .continua_loop
 .move_esquerda:
     mov ax, player_x
     cmp ax, MIN_X
     jle .continua_loop
     dec player_x
+    mov rastro, 0
     jmp .continua_loop
 .move_direita:
     mov ax, player_x
     cmp ax, MAX_X
     jge .continua_loop
     inc player_x
+    mov rastro, 0
     jmp .continua_loop
 
 .continua_loop:
+;=========================
+; enemy 1
+;=========================
+dec enemy1_x
+cmp enemy1_x, -29
+jg skip_enemy1
 
-    ; 2a. Atualiza Coordenadas dos Inimigos
-    dec enemy1_x
-    dec enemy2_x
-    dec enemy3_x
+    call random
+    xor dx, dx
+    mov cx, 95
+    div cx
+    mov enemy1_y, dx
+    add enemy1_y, 10
 
-    ; 2b. Checa Limite (Apenas no 'leader', enemy3)
-    mov ax, enemy3_x
-    cmp ax, -17
-    jg .enemy_reset_skip
+    mov enemy1_x, 291
 
-    mov enemy1_x, 340
-    mov enemy2_x, 380
-    mov enemy3_x, 420
+skip_enemy1:
+;=========================
+; enemy 2
+;=========================
+dec enemy2_x
+cmp enemy2_x, -29
+jg skip_enemy2
+
+    call random
+    xor dx, dx
+    mov cx, 95
+    div cx
+    mov enemy2_y, dx
+    add enemy2_y, 10
+
+    mov enemy2_x, 291
+
+skip_enemy2:
+
+;=========================
+; enemy 3
+;=========================
+dec enemy3_x
+cmp enemy3_x, -29
+jg skip_enemy3
+
+    call random
+    xor dx, dx
+    mov cx, 95
+    div cx
+    mov enemy3_y, dx
+    add enemy3_y, 10
+
+    mov enemy3_x, 291
+
+skip_enemy3:
+
 .enemy_reset_skip:
 
     ; 2c. Atualiza Timer
@@ -247,7 +209,7 @@ JOGO_LOOP:
     cmp timer_counter, 0
     jne .pula_timer_update
 
-    mov timer_counter, 67
+    mov timer_counter, 38
     mov al, tempo_restante
     cmp al, 0
     je .pula_timer_update
@@ -262,7 +224,7 @@ JOGO_LOOP:
     mov [campo4+1], ah
     call atualiza_tempo_hud
 .pula_timer_update:
-
+    
     ; 2d. Atualiza Tiro (Se ativo)
     cmp tiro_ativo, 1
     jne .tiro_update_skip
@@ -278,43 +240,78 @@ JOGO_LOOP:
     mov dx, player_x
     call calcula_posicao
     mov bx, OFFSET nave_cacador
-    call desenha_fantasma
+    call desenha_13x29
+    
+     mov ax, player_y
+    mov dx, player_x
+    cmp rastro, 0
+    je .rastro0
+    cmp rastro, 1
+    je .rastro1
+    cmp rastro, 2
+    je .rastro2
+    call sprite_linha
+
+.rastro0:
+    dec dx
+    call sprite_coluna
+    jmp .continua_rastro
+.rastro1:
+    add ax,13
+    call sprite_linha
+    jmp .continua_rastro
+.rastro2: 
+    dec ax
+    call sprite_linha
+    jmp .continua_rastro
+    
+.continua_rastro:
+    ;muda os inimigos da fase
+    cmp fase_atual, 2
+    jne .nao_mudar_inimigo     
+    jmp .mudar_inimigo 
+.nao_mudar_inimigo:
+    mov si, offset nave1
+    mov di, offset nave_atual
+    mov cx, TAM_SPRITE  
+    jmp .repete_mudar
+.continuar_mudar_inimigo:
 
     ; 3a. Desenha Inimigos (Apenas se estiverem na tela: 0 <= X <= 319)
     mov ax, enemy1_x
     cmp ax, 0
     jl .enemy1_draw_skip
-    cmp ax, 291
+    cmp ax, 320
     jg .enemy1_draw_skip
     mov ax, enemy1_y
     mov dx, enemy1_x
     call calcula_posicao
-    mov bx, OFFSET nave1
-    call desenha_fantasma
+    mov bx, OFFSET nave_atual
+    call desenha_13x29
 .enemy1_draw_skip:
 
     mov ax, enemy2_x
     cmp ax, 0
     jl .enemy2_draw_skip
-    cmp ax, 291
+    cmp ax, 320
     jg .enemy2_draw_skip
     mov ax, enemy2_y
     mov dx, enemy2_x
     call calcula_posicao
-    mov bx, OFFSET nave1
-    call desenha_fantasma
+    mov bx, OFFSET nave_atual
+    call desenha_13x29
 .enemy2_draw_skip:
 
     mov ax, enemy3_x
     cmp ax, 0
     jl .enemy3_draw_skip
-    cmp ax, 291
+    cmp ax, 320
     jg .enemy3_draw_skip
     mov ax, enemy3_y
     mov dx, enemy3_x
     call calcula_posicao
-    mov bx, OFFSET nave1
-    call desenha_fantasma
+    mov bx, OFFSET nave_atual
+    call desenha_13x29
 .enemy3_draw_skip:
 
     ; 3b. Desenha o Tiro (Se ativo)
@@ -338,25 +335,25 @@ JOGO_LOOP:
     je .fim_de_jogo_timer
 
     ; 6. Repete
-    jmp JOGO_LOOP
+jmp JOGO_LOOP
 
+.mudar_inimigo:  
+    mov si, offset nave2
+    mov di, offset nave_atual
+    mov cx, TAM_SPRITE
+.repete_mudar:
+    mov al, [si]
+    mov [di], al
+    inc si
+    inc di
+    loop .repete_mudar
+
+    jmp .continuar_mudar_inimigo
+   
 .fim_de_jogo_timer:
-    ; O jogo congela aqui, com o ultimo frame na tela.
-    ; Espera qualquer tecla
-    mov ah, 00h
-    int 16h
-    ; ao terminar, volta ao chamador (main), que reabre o menu
-    ; podemos redefinir valores iniciais se quiser (opcional)
-    pop es
-    pop bp
-    pop di
-    pop si
-    pop dx
-    pop cx
-    pop bx
-    pop ax
-    ret
-
+    ; O jogo congela aqui, com o ultimo frame na tela.    
+    jmp .Fase2
+    
 atualiza_tempo_hud proc
     push ax
     push bp
@@ -382,7 +379,7 @@ atualiza_tempo_hud proc
     ret
 atualiza_tempo_hud endp
 
-desenha_superficie_fase1 proc
+desenha_superficie_fase proc
     push ax
     push bx
     push cx
@@ -403,10 +400,17 @@ desenha_superficie_fase1 proc
     call calcula_posicao
 
     mov cx, 21000
+    cmp fase_atual, 2
+    je .mudar_cor_superficie
     mov al, 1
+.continuar_mudar_cor_superficie:
     rep stosb
+    
+    cmp fase_atual, 2
+    je .mudar_superficie
 
-    mov si, OFFSET superficie_fase1      ; início da sprite
+    mov si, OFFSET superficie_fase1      ; in?cio da sprite
+.continua_mudar_superficie:
     mov ax, 0A000h
     mov es, ax
 
@@ -417,22 +421,22 @@ desenha_superficie_fase1 proc
     mov bx, 490                         ; largura total da sprite
     mov cx, 20                          ; altura da sprite (linhas)
     mov ax, desloc_superficie
-    mov bp, ax                          ; BP = deslocamento global (backup estável)
+    mov bp, ax                          ; BP = deslocamento global (backup est?vel)
 
 linha_loop:
     push cx                             ; salva contador de linhas
     push si
     push di
 
-    mov cx, 320                         ; pixels visíveis por linha
+    mov cx, 320                         ; pixels vis?veis por linha
     mov dx, bp                          ; deslocamento inicial dentro da linha
     mov ax, dx
     add si, ax                          ; SI = sprite + deslocamento
 
 coluna_loop:
-    lodsb                               ; lê pixel
+    lodsb                               ; l? pixel
     stosb                               ; escreve na VRAM
-    inc dx                              ; avança deslocamento
+    inc dx                              ; avan?a deslocamento
     cmp dx, bx
     jb skip_reset
     sub dx, bx                          ; wrap horizontal
@@ -441,10 +445,10 @@ skip_reset:
     loop coluna_loop
 
     pop di
-    add di, 320                         ; próxima linha da tela
+    add di, 320                         ; pr?xima linha da tela
 
     pop si
-    add si, 490                         ; próxima linha da sprite
+    add si, 490                         ; pr?xima linha da sprite
     pop cx
     loop linha_loop
 
@@ -465,6 +469,29 @@ ok_scroll:
     pop bx
     pop ax
     ret
-desenha_superficie_fase1 endp
+desenha_superficie_fase endp
 
+.mudar_superficie:
+    mov si, OFFSET superficie_fase2 
+    jmp .continua_mudar_superficie
+.mudar_cor_superficie:
+    mov al, 6
+    jmp .continuar_mudar_cor_superficie
+
+; ===== RANDOM =====
+; devolve AX com n?mero pseudo-aleat?rio
+random proc
+
+    mov ax, random_seed
+
+    mov dx, 25173
+    mul dx           ; DX:AX = AX * 25173
+    add ax, 13849    ; incremento
+
+    mov random_seed, ax   ; salva novo estado
+
+    ret
+random endp
+
+fase1 endp
 ; fim fase1.asm

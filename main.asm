@@ -3,6 +3,7 @@
 .stack 100h
 
 include dados.asm
+include desenha.asm
 include telas.asm
 include fase1.asm
 
@@ -11,15 +12,24 @@ include fase1.asm
 main:
     mov ax, @data
     mov ds, ax
-    mov es, ax       
-
-MainLoop:
+    mov es, ax   
     call IniciarVideo
-
+MainLoop:
     call menu_principal
     cmp al, 1
     jne .SairDoJogo
-    call fase1_inicio
+    call fase_inicio
+.Fase2:
+    inc fase_atual
+    mov tempo_restante, 60
+    mov random_seed, 12345
+    mov enemy1_x, 90 
+    mov enemy1_y, 15
+    mov enemy2_x, 290 
+    mov enemy2_y, 50
+    mov enemy3_x, 190
+    mov enemy3_y, 90 
+    call fase_inicio
     jmp MainLoop
 
 .SairDoJogo:

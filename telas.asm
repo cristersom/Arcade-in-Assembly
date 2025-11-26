@@ -1,86 +1,6 @@
 ; telas.asm
 .code
-
-; desenha_fantasma: BX = offset sprite, AX=Y, DX=X
-desenha_fantasma proc
-    push ax
-    push bx
-    push dx
-    push cx
-    push di
-    push es
-
-    mov AX, 0A000h
-    mov ES, AX
-    mov DX, 13
-laco_fantasma:
-    mov CX, 29
-LACO_LINHA:
-    mov AL, [BX]
-    stosb
-    inc BX
-    loop LACO_LINHA
-    mov ax, 320
-    sub ax, 29
-    add DI, ax
-    dec DX
-    jnz laco_fantasma
-
-    pop es
-    pop di
-    pop cx
-    pop dx
-    pop bx
-    pop ax
-    ret
-desenha_fantasma endp
-
-desenha_vida proc
-    push ax
-    push bx
-    push dx
-    push cx
-    push di
-    push es
-
-    mov AX, 0A000h
-    mov ES, AX
-    mov DX, 7
-laco_fantasma2:
-    mov CX, 19
-LACO_LINHA2:
-    mov AL, [BX]
-    stosb
-    inc BX
-    loop LACO_LINHA2
-    mov ax, 320
-    sub ax, 19
-    add DI, ax
-    dec DX
-    jnz laco_fantasma2
-
-    pop es
-    pop di
-    pop cx
-    pop dx
-    pop bx
-    pop ax
-    ret
-desenha_vida endp
-
-
-calcula_posicao proc
-    push dx
-    push cx
-    mov cx, 320
-    mul cx
-    pop cx
-    pop dx
-    add ax, dx
-    mov di, ax
-    ret
-calcula_posicao endp
-
+;----------MENU----------
 atualiza_menu proc
     cmp menu_selecionado, 0
     je .desenha_jogar_selecionado
@@ -126,30 +46,6 @@ atualiza_menu proc
 .fim:
     ret
 atualiza_menu endp
-
-desenha_pixel proc
-    push di
-    push es
-    push cx
-    push dx
-
-    mov cx, 320
-    mul cx
-
-    pop dx
-    add ax, dx
-    mov di, ax
-
-    mov ax, 0A000h
-    mov es, ax
-
-    pop cx
-    mov es:[di], cl
-
-    pop es
-    pop di
-    ret
-desenha_pixel endp
 
 ; menu_principal: retorna AL = 1 para Jogar, AL = 0 para Sair
 menu_principal proc
@@ -232,24 +128,22 @@ MenuLoop:
     ret
 
 .pular_teclado:
-    ; anima??o (igual estava)
-    mov ax, meteoro_y
-    mov dx, meteoro_x
-    call calcula_posicao
-    mov bx, OFFSET sprite_vazio
-    call desenha_fantasma
 
     mov ax, nave_aliada_y
     mov dx, nave_aliada_x
     call calcula_posicao
-    mov bx, OFFSET sprite_vazio
-    call desenha_fantasma
+    mov bx, OFFSET sprite_coluna_vazia
+    call desenha_coluna
 
     mov ax, nave_alien_y
     mov dx, nave_alien_x
+    cmp direcao_atual2,1
+    je .continua_sprite
+    add dx, 28
+.continua_sprite:  
     call calcula_posicao
-    mov bx, OFFSET sprite_vazio
-    call desenha_fantasma
+    mov bx, OFFSET sprite_coluna_vazia
+    call desenha_coluna
 
     mov ax, direcao_atual
     add nave_aliada_x, ax
@@ -259,19 +153,10 @@ MenuLoop:
     mov ax, direcao_atual2
     add nave_alien_x, ax
 
-    ; mov al, direcao_aliada_y
-    ; cbw
-    ;add nave_aliada_y, ax
-
     cmp nave_alien_x, 290
     jge .inverter_alien
     cmp nave_alien_x, 0
     jle .inverter_alien
-
-    ;cmp nave_aliada_y, 81
-    ;  jle .inverter_aliada_y
-    ;cmp nave_aliada_y, 95
-    ;jge .inverter_aliada_y
 
     jmp .desenhar_local
 
@@ -280,30 +165,25 @@ MenuLoop:
     neg ax
     mov direcao_atual2, ax
     jmp .desenhar_local
-
-    ;.inverter_aliada_y:
-    ; mov al, direcao_aliada_y
-    ;neg al
-    ; mov direcao_aliada_y, al
-
+    
 .desenhar_local:
     mov ax, meteoro_y
     mov dx, meteoro_x
     call calcula_posicao
     mov bx, OFFSET nave2
-    call desenha_fantasma
+    call desenha_13x29
 
     mov ax, nave_aliada_y
     mov dx, nave_aliada_x
     call calcula_posicao
     mov bx, OFFSET nave_cacador
-    call desenha_fantasma
+    call desenha_13x29
 
     mov ax, nave_alien_y
     mov dx, nave_alien_x
     call calcula_posicao
     mov bx, OFFSET nave1
-    call desenha_fantasma
+    call desenha_13x29
 
     mov ah, 86h
     mov cx, delay_cx
@@ -339,73 +219,119 @@ MenuLoop:
 
 menu_principal endp
 
-carrega_hud proc
-   mov AL, 13H
-    mov AH, 0
-    int 10H
+;----------FASES----------
 
-    mov ax, @data 
-    mov ds, ax  
-    mov Es, ax   
+fase_inicio proc
+    push ax
+    push bx
+    push cx
+    push dx
+    push si
+    push di
+    push bp
+    push es
 
-    mov bp,OFFSET campo1
-    mov ah,13h
-    mov al,0h
-    xor bh,bh
-    mov bl,15
-    mov cx,TAM_MSG3
-    mov dh,0
-    mov dl,0
+    ; ====== TELA PRETA ======
+    mov ax, 0A000h
+    mov es, ax
+    xor di, di
+    mov al, 0
+    mov cx, 320*200
+    rep stosb
+
+    ; ====== IMPRIMIR TEXTO ======
+    mov ax, @data
+    mov ds, ax
+    cmp fase_atual, 2
+    je .troca_texto_fase2
+    cmp fase_atual, 3
+    je .troca_texto_fase3
+    mov si, OFFSET msg_fase1
+    
+.continua_texto_fase:
+    mov dh, 9          ; linha inicial da tela (vertical)
+    
+.PrintLine:
+    push si            ; salvar posi??o atual da string
+    xor cx, cx         ; contador de caracteres da linha
+
+.CountChars:
+    lodsb
+    cmp al, CR
+    je .GotLineLength
+    cmp al, 0
+    je .DonePrint
+    inc cx
+    jmp .CountChars
+
+.GotLineLength:
+    ; calcular coluna inicial para centralizar
+    mov bx, 40         ; largura da tela em caracteres (aprox 80/2)
+    sub bx, cx
+    shr bx, 1          ; bx = coluna inicial
+
+    ; reposicionar cursor
+    mov ah, 02h
+    mov bh, 0
+    mov dh, dh         ; linha vertical
+    mov dl, bl         ; coluna horizontal
     int 10h
 
-    mov bp,OFFSET campo2
-    mov ah,13h
-    mov al,0h
-    xor bh,bh
-    mov bl,15
-    mov cx,TAM_MSG4
-    mov dh,0
-    mov dl,72
+    ; imprimir a linha
+    pop si             ; restaurar posi??o da linha
+.PrintChars:
+    lodsb
+    cmp al, CR
+    je .NextLine
+    mov ah, 0Eh
+    mov bh, 0
+    cmp fase_atual, 2
+    je .troca_cor_texto_fase2
+    cmp fase_atual, 3
+    je .troca_cor_texto_fase3
+    mov bl, A         ; cor
+.continua_cor_texto:
     int 10h
+    jmp .PrintChars
 
-    mov bp,OFFSET campo3
-    mov ah,13h
-    mov al,0h
-    xor bh,bh
-    mov bl,2
-    mov cx,TAM_MSG5
-    mov dh,0
-    mov dl,6
-    int 10h
+.NextLine:
+    inc dh             ; pr?xima linha vertical
+    lodsb              ; pular LF
+    jmp .PrintLine
 
-    mov bp,OFFSET campo4
-    mov ah,13h
-    mov al,0h
-    xor bh,bh
-    mov bl,2
-    mov cx,TAM_MSG6
-    mov dh,0
-    mov dl,78
-    int 10h 
-  
-    mov ax, 0
-    mov dx, 151
-    call calcula_posicao
-    mov bx, OFFSET vidas
-    call desenha_vida
-    
-    mov ax, 0
-    mov dx, 121
-    call calcula_posicao
-    mov bx, OFFSET vidas
-    call desenha_vida
-    
-    mov ax, 0
-    mov dx, 181
-    call calcula_posicao
-    mov bx, OFFSET vidas
-    call desenha_vida
-    
-    ret
-carrega_hud endp
+.DonePrint:
 
+    ; ====== DELAY 4 SEGUNDOS ======
+    mov ax, 0040h
+    mov es, ax
+    mov bx, es:[006Ch]
+    add bx, 73   ; ? 4 segundos
+
+.WaitLoop:
+    cmp es:[006Ch], bx
+    jl .WaitLoop
+
+    ; ====== APAGAR O TEXTO ======
+    mov ax, 0A000h
+    mov es, ax
+    xor di, di
+    mov al, 0
+    mov cx, 320*200
+    rep stosb
+    call fase1
+fase_inicio endp
+
+.troca_texto_fase2:
+    mov si, OFFSET msg_fase2
+    jmp .continua_texto_fase
+.troca_texto_fase3:
+    mov si, OFFSET msg_fase3
+    jmp .continua_texto_fase
+.troca_cor_texto_fase2:
+    mov bl, 6
+    jmp .continua_cor_texto
+.troca_cor_texto_fase3:
+    mov bl, 7
+    jmp .continua_cor_texto
+    
+    

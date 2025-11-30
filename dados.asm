@@ -13,14 +13,14 @@
     msg      db "                            __   __   " , CR, NL
              db "    ___ ___________ ___ _  / /  / /__ " , CR, NL
              db "   (_-</ __/ __/ _ `/  ' \/ _ \/ / -_)", CR, NL
-             db "  /___/\__/_/  \_,_/_/_/_/_.__/_/\__/ " 
+             db "  /___/\__/_/  \_,_/_/_/_.__/_/\__/ " 
 
     TAM_MSG equ $-msg 
 
     nomes    db 'Cristersom Simionato e Wellinton Sartori', CR, NL
     TAM_NOMES equ $-nomes 
 
-    ; Strings separadas para o menu (com alinhamento corrigido)
+    ; Strings separadas para o menu
     menu_jogar_des db '                Jogar  '
     TAM_JOGAR_DES  equ $-menu_jogar_des
     menu_jogar_sel db '              [ Jogar ]'
@@ -33,23 +33,25 @@
 
     menu_selecionado db 0 ; 0 = Jogar, 1 = Sair
 
-    campo3     db '000'
-    TAM_MSG5 equ $-campo3 
+    ; --- ALTERA??O: 5 DIGITOS ---
+    campo3     db '00000'
+    TAM_MSG5 equ 5
 
     campo4     db '60'
-    TAM_MSG6 equ $-campo4 
+    TAM_MSG6 equ 2
 
-    campo1     db 'SCORE: '
+    ; --- ALTERA??O: REMOVIDO ESPA?O EXTRA ---
+    campo1     db 'SCORE:'
     TAM_MSG3 equ $-campo1 
 
-    campo2     db 'TEMPO: '
+    campo2     db 'TEMPO:'
     TAM_MSG4 equ $-campo2 
 
-    sprite_vazio db (13*29) dup(0) ; Sprite preto 17x13 para apagar
+    sprite_vazio db (13*29) dup(0) ; Sprite preto
     sprite_coluna_vazia db 13 DUP(0)
     sprite_linha_vazia db 29 DUP(0)
                       
-    ; Coordenadas para a animacao do menu
+    ; Coordenadas
     nave_aliada_x dw 10 
     nave_aliada_y dw 50  
     nave_alien_x dw 120 
@@ -60,7 +62,7 @@
     direcao_atual2 dw 1  
     direcao_aliada_y db 1
 
-    ; Variaveis para o delay (50ms)
+    ; Variaveis para o delay
     delay_cx dw 0
     delay_dx dw 50000 
     
@@ -70,14 +72,12 @@
 
     ; --- VARIAVEIS DA FASE 1 --- 
     desloc_superficie dw 0
-    ; Define como vão ser spawnados os inimigos 
     random_seed dw 32141
     
-    ;variavel para saber o lado que devo apagar o rastro
-    rastro dw 0 ;0 direita ou esquerda 1 para cima, 2 para baixo 
+    rastro dw 0 
     
-    qtd_vidas db 3    ; n?mero de vidas do jogador
-    vidas_max db 3    ; m?ximo de vidas
+    qtd_vidas db 3    
+    vidas_max db 3    
 
     player_x dw 10  
     player_y dw 91  

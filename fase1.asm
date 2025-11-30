@@ -210,9 +210,9 @@ skip_enemy3:
 
     mov timer_counter, 38
     
-    ; --- AQUI EST? A MELHORIA: SOMA 10 PONTOS ---
-    call soma_10_pontos
-    ; --------------------------------------------
+    ; --- AQUI: CHAMA A NOVA FUN??O DE PONTUA??O ---
+    call atualiza_score_fase
+    ; ----------------------------------------------
 
     mov al, tempo_restante
     cmp al, 0
@@ -372,7 +372,7 @@ atualiza_tempo_hud proc
     mov bl,2
     mov cx,TAM_MSG6
     mov dh,0
-    mov dl,78
+    mov dl,38 ; Ajustado para 40 colunas
     int 10h
 
     pop si
@@ -497,8 +497,8 @@ random proc
     ret
 random endp
 
-; ===== NOVA ROTINA: SOMA 10 PONTOS =====
-soma_10_pontos proc
+; ===== NOVA ROTINA DE PONTUA??O POR FASE =====
+atualiza_score_fase proc
     push ax
     push bx
     push cx
@@ -511,42 +511,97 @@ soma_10_pontos proc
     mov ds, ax
     mov es, ax
 
-    ; O Score e '000' (3 digitos).
-    ; campo3+0 = Centena
-    ; campo3+1 = Dezena  <- Aqui somamos 1 para valer 10 pontos
-    ; campo3+2 = Unidade
+    ; Define quanto somar baseado na fase
+    cmp fase_atual, 1
+    je .soma_10
+    cmp fase_atual, 2
+    je .soma_15
+    cmp fase_atual, 3
+    je .soma_20
+    jmp .atualiza_hud
 
-    mov al, [campo3+1]  ; Pega a dezena
-    inc al              ; Soma 1
-    cmp al, '9'
-    jg .vai_um_centena  ; Se passar de 9, vai 1
-    mov [campo3+1], al  ; Salva
-    jmp .atualiza_tela
+.soma_10:
+    ; Fase 1: +10 pontos (soma 1 na dezena)
+    call adiciona_dezena_1
+    jmp .atualiza_hud
 
-.vai_um_centena:
-    mov byte ptr [campo3+1], '0' ; Zera dezena
-    mov al, [campo3]    ; Pega centena
-    inc al              ; Soma 1
-    cmp al, '9'
-    jg .trava_score     ; Se passar de 990, trava
-    mov [campo3], al    ; Salva centena
-    jmp .atualiza_tela
+.soma_15:
+    ; Fase 2: +15 pontos (soma 5 na unidade, 1 na dezena)
+    call adiciona_unidade_5
+    call adiciona_dezena_1
+    jmp .atualiza_hud
 
-.trava_score:
-    ; Trava em 990 para nao estragar a memoria
-    mov byte ptr [campo3], '9'
-    mov byte ptr [campo3+1], '9'
+.soma_20:
+    ; Fase 3: +20 pontos (soma 1 na dezena duas vezes)
+    call adiciona_dezena_1
+    call adiciona_dezena_1
+    jmp .atualiza_hud
 
-.atualiza_tela:
-    ; Redesenha apenas o Score na posicao dele
+; Sub-rotinas auxiliares
+adiciona_unidade_5:
+    mov bx, 4           ; Indice 4 (Unidade)
+    add byte ptr [campo3 + bx], 5
+    cmp byte ptr [campo3 + bx], '9'
+    jle .fim_soma_u
+    sub byte ptr [campo3 + bx], 10
+    call propaga_carry_dezena
+.fim_soma_u:
+    ret
+
+adiciona_dezena_1:
+    mov bx, 3           ; Indice 3 (Dezena)
+    inc byte ptr [campo3 + bx]
+    cmp byte ptr [campo3 + bx], '9'
+    jle .fim_soma_d
+    sub byte ptr [campo3 + bx], 10
+    call propaga_carry_centena
+.fim_soma_d:
+    ret
+
+; Propaga??o do "vai um"
+propaga_carry_dezena:
+    mov bx, 3
+    inc byte ptr [campo3 + bx]
+    cmp byte ptr [campo3 + bx], '9'
+    jle .fim_propaga
+    sub byte ptr [campo3 + bx], 10
+    ; cai para centena...
+
+propaga_carry_centena:
+    mov bx, 2
+    inc byte ptr [campo3 + bx]
+    cmp byte ptr [campo3 + bx], '9'
+    jle .fim_propaga
+    sub byte ptr [campo3 + bx], 10
+    ; cai para milhar...
+
+propaga_carry_milhar:
+    mov bx, 1
+    inc byte ptr [campo3 + bx]
+    cmp byte ptr [campo3 + bx], '9'
+    jle .fim_propaga
+    sub byte ptr [campo3 + bx], 10
+    ; cai para dezena de milhar...
+
+propaga_carry_dez_milhar:
+    mov bx, 0
+    inc byte ptr [campo3 + bx]
+    cmp byte ptr [campo3 + bx], '9'
+    jle .fim_propaga
+    mov byte ptr [campo3 + bx], '9' ; Trava em 99999
+.fim_propaga:
+    ret
+
+.atualiza_hud:
+    ; Redesenha o Score com exatos 5 digitos
     mov bp, OFFSET campo3
     mov ah, 13h
     mov al, 0h
     xor bh, bh
-    mov bl, 2 ; Verde
-    mov cx, 3 ; 3 Digitos
-    mov dh, 0 ; Linha 0
-    mov dl, 6 ; Coluna 6 (Logo apos "SCORE: ")
+    mov bl, 2
+    mov cx, 5  ; FIXO 5
+    mov dh, 0
+    mov dl, 6  ; Posi??o ajustada
     int 10h
 
     pop ds
@@ -557,7 +612,6 @@ soma_10_pontos proc
     pop bx
     pop ax
     ret
-soma_10_pontos endp
+atualiza_score_fase endp
 
 fase1 endp
-; fim fase1.asm

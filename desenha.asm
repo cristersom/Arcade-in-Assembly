@@ -1,5 +1,5 @@
 .code
-;Converte coordenadas (X = AX, Y = DX) em um endereço linear na tela 320×200, retornando a posição em DI.
+;Converte coordenadas
 calcula_posicao proc
     push dx
     push cx
@@ -12,7 +12,7 @@ calcula_posicao proc
     ret
 calcula_posicao endp
 
-; Desenha um sprite de 13 linhas por 29 colunas na tela, usando BX como ponteiro do sprite e DI como posição inicial no vídeo.
+; Desenha sprite 13x29
 desenha_13x29 proc
     push ax
     push bx
@@ -46,7 +46,7 @@ LACO_13x29:
     ret
 desenha_13x29 endp
 
-;Desenha um ícone de vida formado por um sprite de 7 linhas por 19 colunas, também usando BX como sprite e DI como posição inicial.
+;Desenha vida
 desenha_vida proc
     push ax
     push bx
@@ -80,7 +80,7 @@ LACO_7x19:
     ret
 desenha_vida endp
 
-; Desenha um sprite de 13 linhas por 1 coluna para apagar o rastro dos objetos.
+; Desenha coluna
 desenha_coluna proc
     push ax
     push bx
@@ -115,7 +115,7 @@ LACO_13x1:
     ret
 desenha_coluna endp
 
-; Desenha um sprite de 1 linha por 29 colunas para apagar o rastro dos objetos.
+; Desenha linha
 desenha_linha proc
     push ax
     push bx
@@ -150,7 +150,7 @@ LACO_1x29:
     ret
 desenha_linha endp
 
-; Desenha um único pixel na tela.
+; Desenha pixel
 desenha_pixel proc
     push di
     push es
@@ -175,13 +175,14 @@ desenha_pixel proc
     ret
 desenha_pixel endp
 
-; Escreve textos na parte superior da tela usando int 10h e desenha os ícones de vida nos lugares corretos do HUD.
+; Carrega HUD (ATUALIZADO PARA 5 DIGITOS)
 carrega_hud proc
 
     mov ax, @data 
     mov ds, ax  
     mov Es, ax   
 
+    ; Texto SCORE:
     mov bp,OFFSET campo1
     mov ah,13h
     mov al,0h
@@ -192,6 +193,7 @@ carrega_hud proc
     mov dl,0
     int 10h
 
+    ; Texto TEMPO:
     mov bp,OFFSET campo2
     mov ah,13h
     mov al,0h
@@ -199,27 +201,29 @@ carrega_hud proc
     mov bl,15
     mov cx,TAM_MSG4
     mov dh,0
-    mov dl,72
+    mov dl,32
     int 10h
 
+    ; Valor SCORE (5 Digitos)
     mov bp,OFFSET campo3
     mov ah,13h
     mov al,0h
     xor bh,bh
     mov bl,2
-    mov cx,TAM_MSG5
+    mov cx,5  ; AGORA 5
     mov dh,0
-    mov dl,6
+    mov dl,6  ; Ajustado
     int 10h
 
+    ; Valor TEMPO
     mov bp,OFFSET campo4
     mov ah,13h
     mov al,0h
     xor bh,bh
     mov bl,2
-    mov cx,TAM_MSG6
+    mov cx,2
     mov dh,0
-    mov dl,78
+    mov dl,38 ; Ajustado para o fim da tela
     int 10h 
   
     mov ax, 0

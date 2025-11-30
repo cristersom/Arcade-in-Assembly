@@ -18,6 +18,16 @@ MainLoop:
     call menu_principal
     cmp al, 1
     jne .SairDoJogo
+    
+    ; --- NOVO: Zera o score ao iniciar o jogo ---
+    mov byte ptr [campo3], '0'
+    mov byte ptr [campo3+1], '0'
+    mov byte ptr [campo3+2], '0'
+    mov byte ptr [campo3+3], '0'
+    mov byte ptr [campo3+4], '0'
+    mov fase_atual, 1
+    ; --------------------------------------------
+
     call fase_inicio
 .Fase2:
     inc fase_atual

@@ -18,7 +18,7 @@ JOGO_LOOP:
     
     call desenha_superficie_fase
     
-    ; 1a. Apaga Inimigos (Apenas se estiverem na tela: 0 <= X <= 319)
+    ; 1a. Apaga Inimigos
     mov ax, enemy1_y
     mov dx, enemy1_x
     cmp dx, 0
@@ -66,12 +66,12 @@ sprite_linha endp
     cmp enemy2_x, 0
     je .enemy3
 .skip:
-    ; 1b. Apaga o Tiro (Se ativo)
+    ; 1b. Apaga o Tiro
     cmp tiro_ativo, 1
     jne .tiro_erase_skip
     mov ax, tiro_y
     mov dx, tiro_x
-    mov cl, 0 ; Cor preta
+    mov cl, 0 
     call desenha_pixel
 .tiro_erase_skip:
 
@@ -88,7 +88,6 @@ sprite_linha endp
     cmp al, 0
     jne .checar_tecla_disparo
 
-    ; Processa teclas especiais (Setas)
     cmp ah, 48H
     je .move_cima
     cmp ah, 50H
@@ -102,10 +101,8 @@ sprite_linha endp
 .checar_tecla_disparo:
     cmp al, ' '
     jne .continua_loop
-
     cmp tiro_ativo, 0
     jne .continua_loop
-
     mov tiro_ativo, 1
     mov ax, player_y
     add ax, 6
@@ -146,9 +143,9 @@ sprite_linha endp
 
 .continua_loop:
 
-    ; === VERIFICA COLIS?O DO TIRO ===
+    ; === VERIFICA COLIS?O DO TIRO (ATUALIZADO) ===
     call verifica_colisao_tiro
-    ; ================================
+    ; =============================================
 
 ;=========================
 ; enemy 1
@@ -202,7 +199,7 @@ skip_enemy3:
     call atualiza_tempo_hud
 .pula_timer_update:
     
-    ; 2d. Atualiza Tiro (Se ativo)
+    ; 2d. Atualiza Tiro
     cmp tiro_ativo, 1
     jne .tiro_update_skip
     add tiro_x, 2
@@ -212,7 +209,7 @@ skip_enemy3:
     mov tiro_ativo, 0
 .tiro_update_skip:
 
-    ; 3. Desenha o jogador na nova posicao
+    ; 3. Desenha o jogador
     mov ax, player_y
     mov dx, player_x
     call calcula_posicao
@@ -254,7 +251,7 @@ skip_enemy3:
     jmp .repete_mudar
 .continuar_mudar_inimigo:
 
-    ; 3a. Desenha Inimigos (Apenas se estiverem na tela: 0 <= X <= 319)
+    ; 3a. Desenha Inimigos
     mov ax, enemy1_x
     cmp ax, 0
     jl .enemy1_draw_skip
@@ -291,27 +288,24 @@ skip_enemy3:
     call desenha_13x29
 .enemy3_draw_skip:
 
-    ; 3b. Desenha o Tiro (Se ativo)
+    ; 3b. Desenha o Tiro
     cmp tiro_ativo, 1
     jne .tiro_draw_skip
     mov ax, tiro_y
     mov dx, tiro_x
-    mov cl, 0Fh ; Cor Branca
+    mov cl, 0Fh 
     call desenha_pixel
 .tiro_draw_skip:
 
-    ; 4. Delay
     mov ah, 86h
     mov cx, game_delay_cx
     mov dx, game_delay_dx
     int 15h
 
-    ; 5. Checa se o tempo acabou (APOS desenhar)
     mov al, tempo_restante
     cmp al, 0
     je .fim_de_jogo_timer
 
-    ; 6. Repete
 jmp JOGO_LOOP
 
 .mudar_inimigo:  
@@ -324,7 +318,6 @@ jmp JOGO_LOOP
     inc si
     inc di
     loop .repete_mudar
-
     jmp .continuar_mudar_inimigo
    
 .fim_de_jogo_timer:
@@ -401,7 +394,6 @@ desenha_superficie_fase proc
 
     mov ax, @data
     mov ds, ax
-    
     mov ax, 0A000h
     mov es, ax
 
@@ -485,7 +477,6 @@ desenha_superficie_fase endp
     mov al, 6
     jmp .continuar_mudar_cor_superficie
 
-; ===== RANDOM =====
 random proc
     mov ax, random_seed
     mov dx, 25173
@@ -495,38 +486,55 @@ random proc
     ret
 random endp
 
-; ===== VERIFICA COLIS?O DO TIRO COM INIMIGOS (CORRIGIDO) =====
+; ===== VERIFICA COLIS?O DO TIRO COM REGRAS POR FASE =====
 verifica_colisao_tiro proc
     cmp tiro_ativo, 1
-    je .inicio_checa_colisao ; Pula para dentro se for igual (ativo)
-    jmp .fim_colisao         ; Se n?o, pula para fora (JMP longe)
+    je .inicio_checa_colisao 
+    jmp .fim_colisao         
 
 .inicio_checa_colisao:
-    ; Checa Inimigo 1
+    ; --- Inimigo 1 ---
     mov ax, tiro_x
     cmp ax, enemy1_x
     jl .checa_e2
     mov bx, enemy1_x
-    add bx, 29      ; Largura do inimigo
+    add bx, 29
     cmp ax, bx
     jg .checa_e2
-    
     mov ax, tiro_y
     cmp ax, enemy1_y
     jl .checa_e2
     mov bx, enemy1_y
-    add bx, 13      ; Altura do inimigo
+    add bx, 13
     cmp ax, bx
     jg .checa_e2
 
-    ; HIT INIMIGO 1
-    call respawn_enemy1 ; Reseta posicao
-    mov tiro_ativo, 0   ; Some o tiro
-    call soma_100_pontos ; +100 pontos
-    jmp .fim_colisao    ; Sai da rotina
+    ; HIT Inimigo 1 detectado
+    ; Verifica Fase
+    cmp fase_atual, 2
+    je .hit_fase2_e1
+    
+    ; Fase 1 ou 3 (Destrutivel)
+    call respawn_enemy1
+    mov tiro_ativo, 0
+    cmp fase_atual, 3
+    je .pontos_fase3_e1
+    
+    ; Fase 1 (100 pontos)
+    call soma_100_pontos
+    jmp .fim_colisao
+
+    .pontos_fase3_e1:
+    call soma_150_pontos
+    jmp .fim_colisao
+
+    .hit_fase2_e1:
+    ; Fase 2 (Indestrutivel)
+    mov tiro_ativo, 0 ; Tiro some, meteoro fica
+    jmp .fim_colisao
 
 .checa_e2:
-    ; Checa Inimigo 2
+    ; --- Inimigo 2 ---
     mov ax, tiro_x
     cmp ax, enemy2_x
     jl .checa_e3
@@ -534,7 +542,6 @@ verifica_colisao_tiro proc
     add bx, 29
     cmp ax, bx
     jg .checa_e3
-    
     mov ax, tiro_y
     cmp ax, enemy2_y
     jl .checa_e3
@@ -543,14 +550,27 @@ verifica_colisao_tiro proc
     cmp ax, bx
     jg .checa_e3
 
-    ; HIT INIMIGO 2
+    ; HIT Inimigo 2 detectado
+    cmp fase_atual, 2
+    je .hit_fase2_e2
+    
     call respawn_enemy2
     mov tiro_ativo, 0
+    cmp fase_atual, 3
+    je .pontos_fase3_e2
     call soma_100_pontos
     jmp .fim_colisao
 
+    .pontos_fase3_e2:
+    call soma_150_pontos
+    jmp .fim_colisao
+
+    .hit_fase2_e2:
+    mov tiro_ativo, 0
+    jmp .fim_colisao
+
 .checa_e3:
-    ; Checa Inimigo 3
+    ; --- Inimigo 3 ---
     mov ax, tiro_x
     cmp ax, enemy3_x
     jl .fim_colisao
@@ -558,7 +578,6 @@ verifica_colisao_tiro proc
     add bx, 29
     cmp ax, bx
     jg .fim_colisao
-    
     mov ax, tiro_y
     cmp ax, enemy3_y
     jl .fim_colisao
@@ -567,10 +586,24 @@ verifica_colisao_tiro proc
     cmp ax, bx
     jg .fim_colisao
 
-    ; HIT INIMIGO 3
+    ; HIT Inimigo 3 detectado
+    cmp fase_atual, 2
+    je .hit_fase2_e3
+    
     call respawn_enemy3
     mov tiro_ativo, 0
+    cmp fase_atual, 3
+    je .pontos_fase3_e3
     call soma_100_pontos
+    jmp .fim_colisao
+
+    .pontos_fase3_e3:
+    call soma_150_pontos
+    jmp .fim_colisao
+
+    .hit_fase2_e3:
+    mov tiro_ativo, 0
+    jmp .fim_colisao
 
 .fim_colisao:
     ret
@@ -578,13 +611,21 @@ verifica_colisao_tiro endp
 
 ; ===== PONTUA??O =====
 soma_100_pontos proc
-    ; Soma 100 pontos (Adiciona 1 na Centena [indice 2])
     push bx
     call adiciona_centena_1
     call atualiza_hud_pontuacao
     pop bx
     ret
 soma_100_pontos endp
+
+soma_150_pontos proc
+    push bx
+    call adiciona_centena_1 ; +100
+    call adiciona_dezena_5  ; +50
+    call atualiza_hud_pontuacao
+    pop bx
+    ret
+soma_150_pontos endp
 
 atualiza_score_fase proc
     push ax
@@ -657,7 +698,7 @@ atualiza_hud_pontuacao proc
     ret
 atualiza_hud_pontuacao endp
 
-; Sub-rotinas auxiliares de soma
+; === MATEM?TICA SCORE ===
 adiciona_unidade_5:
     mov bx, 4           
     add byte ptr [campo3 + bx], 5
@@ -676,6 +717,16 @@ adiciona_dezena_1:
     sub byte ptr [campo3 + bx], 10
     call propaga_carry_centena
 .fim_soma_d:
+    ret
+
+adiciona_dezena_5:
+    mov bx, 3
+    add byte ptr [campo3 + bx], 5
+    cmp byte ptr [campo3 + bx], '9'
+    jle .fim_soma_d5
+    sub byte ptr [campo3 + bx], 10
+    call propaga_carry_centena
+.fim_soma_d5:
     ret
 
 adiciona_centena_1:

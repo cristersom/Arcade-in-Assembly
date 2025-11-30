@@ -17,8 +17,7 @@ fase1 proc
 JOGO_LOOP:
     
     call desenha_superficie_fase
-    ; 1. Apaga o jogador da posicao antiga
-   
+    
     ; 1a. Apaga Inimigos (Apenas se estiverem na tela: 0 <= X <= 319)
     mov ax, enemy1_y
     mov dx, enemy1_x
@@ -45,7 +44,6 @@ JOGO_LOOP:
     jmp .skip
  
 sprite_coluna proc
-   
     call calcula_posicao
     mov bx, OFFSET sprite_coluna_vazia
     call desenha_coluna
@@ -53,12 +51,11 @@ sprite_coluna proc
 sprite_coluna endp
 
 sprite_linha proc
-   
     call calcula_posicao
     mov bx, OFFSET sprite_linha_vazia
     call desenha_linha
     ret
-    sprite_linha endp
+sprite_linha endp
 
 .sprite_full:    
     call calcula_posicao
@@ -148,22 +145,18 @@ sprite_linha proc
     jmp .continua_loop
 
 .continua_loop:
+
+    ; === VERIFICA COLIS?O DO TIRO ===
+    call verifica_colisao_tiro
+    ; ================================
+
 ;=========================
 ; enemy 1
 ;=========================
 dec enemy1_x
 cmp enemy1_x, -29
 jg skip_enemy1
-
-    call random
-    xor dx, dx
-    mov cx, 95
-    div cx
-    mov enemy1_y, dx
-    add enemy1_y, 10
-
-    mov enemy1_x, 291
-
+    call respawn_enemy1
 skip_enemy1:
 ;=========================
 ; enemy 2
@@ -171,34 +164,15 @@ skip_enemy1:
 dec enemy2_x
 cmp enemy2_x, -29
 jg skip_enemy2
-
-    call random
-    xor dx, dx
-    mov cx, 95
-    div cx
-    mov enemy2_y, dx
-    add enemy2_y, 10
-
-    mov enemy2_x, 291
-
+    call respawn_enemy2
 skip_enemy2:
-
 ;=========================
 ; enemy 3
 ;=========================
 dec enemy3_x
 cmp enemy3_x, -29
 jg skip_enemy3
-
-    call random
-    xor dx, dx
-    mov cx, 95
-    div cx
-    mov enemy3_y, dx
-    add enemy3_y, 10
-
-    mov enemy3_x, 291
-
+    call respawn_enemy3
 skip_enemy3:
 
 .enemy_reset_skip:
@@ -210,9 +184,8 @@ skip_enemy3:
 
     mov timer_counter, 38
     
-    ; --- AQUI: CHAMA A NOVA FUN??O DE PONTUA??O ---
+    ; Chama pontuacao por tempo
     call atualiza_score_fase
-    ; ----------------------------------------------
 
     mov al, tempo_restante
     cmp al, 0
@@ -355,8 +328,41 @@ jmp JOGO_LOOP
     jmp .continuar_mudar_inimigo
    
 .fim_de_jogo_timer:
-    ; O jogo congela aqui, com o ultimo frame na tela.    
     jmp .Fase2
+
+; === ROTINAS DE RESPAWN ===
+respawn_enemy1 proc
+    call random
+    xor dx, dx
+    mov cx, 95
+    div cx
+    mov enemy1_y, dx
+    add enemy1_y, 10
+    mov enemy1_x, 291
+    ret
+respawn_enemy1 endp
+
+respawn_enemy2 proc
+    call random
+    xor dx, dx
+    mov cx, 95
+    div cx
+    mov enemy2_y, dx
+    add enemy2_y, 10
+    mov enemy2_x, 291
+    ret
+respawn_enemy2 endp
+
+respawn_enemy3 proc
+    call random
+    xor dx, dx
+    mov cx, 95
+    div cx
+    mov enemy3_y, dx
+    add enemy3_y, 10
+    mov enemy3_x, 291
+    ret
+respawn_enemy3 endp
     
 atualiza_tempo_hud proc
     push ax
@@ -370,9 +376,9 @@ atualiza_tempo_hud proc
     mov al,0h
     xor bh,bh
     mov bl,2
-    mov cx,TAM_MSG6
+    mov cx,2
     mov dh,0
-    mov dl,38 ; Ajustado para 40 colunas
+    mov dl,38
     int 10h
 
     pop si
@@ -413,46 +419,43 @@ desenha_superficie_fase proc
     cmp fase_atual, 2
     je .mudar_superficie
 
-    mov si, OFFSET superficie_fase1      ; in?cio da sprite
+    mov si, OFFSET superficie_fase1
 .continua_mudar_superficie:
     mov ax, 0A000h
     mov es, ax
 
-    mov ax, 119                         ; Y inicial
-    mov dx, 0                           ; X inicial
-    call calcula_posicao                ; DI = Y*320 + X
+    mov ax, 119
+    mov dx, 0
+    call calcula_posicao
 
-    mov bx, 490                         ; largura total da sprite
-    mov cx, 20                          ; altura da sprite (linhas)
+    mov bx, 490
+    mov cx, 20
     mov ax, desloc_superficie
-    mov bp, ax                          ; BP = deslocamento global (backup est?vel)
+    mov bp, ax
 
 linha_loop:
-    push cx                             ; salva contador de linhas
+    push cx
     push si
     push di
-
-    mov cx, 320                         ; pixels vis?veis por linha
-    mov dx, bp                          ; deslocamento inicial dentro da linha
+    mov cx, 320
+    mov dx, bp
     mov ax, dx
-    add si, ax                          ; SI = sprite + deslocamento
-
+    add si, ax
 coluna_loop:
-    lodsb                               ; l? pixel
-    stosb                               ; escreve na VRAM
-    inc dx                              ; avan?a deslocamento
+    lodsb
+    stosb
+    inc dx
     cmp dx, bx
     jb skip_reset
-    sub dx, bx                          ; wrap horizontal
+    sub dx, bx
     sub si, bx
 skip_reset:
     loop coluna_loop
 
     pop di
-    add di, 320                         ; pr?xima linha da tela
-
+    add di, 320
     pop si
-    add si, 490                         ; pr?xima linha da sprite
+    add si, 490
     pop cx
     loop linha_loop
 
@@ -483,21 +486,106 @@ desenha_superficie_fase endp
     jmp .continuar_mudar_cor_superficie
 
 ; ===== RANDOM =====
-; devolve AX com n?mero pseudo-aleat?rio
 random proc
-
     mov ax, random_seed
-
     mov dx, 25173
-    mul dx           ; DX:AX = AX * 25173
-    add ax, 13849    ; incremento
-
-    mov random_seed, ax   ; salva novo estado
-
+    mul dx
+    add ax, 13849
+    mov random_seed, ax
     ret
 random endp
 
-; ===== NOVA ROTINA DE PONTUA??O POR FASE =====
+; ===== VERIFICA COLIS?O DO TIRO COM INIMIGOS (CORRIGIDO) =====
+verifica_colisao_tiro proc
+    cmp tiro_ativo, 1
+    je .inicio_checa_colisao ; Pula para dentro se for igual (ativo)
+    jmp .fim_colisao         ; Se n?o, pula para fora (JMP longe)
+
+.inicio_checa_colisao:
+    ; Checa Inimigo 1
+    mov ax, tiro_x
+    cmp ax, enemy1_x
+    jl .checa_e2
+    mov bx, enemy1_x
+    add bx, 29      ; Largura do inimigo
+    cmp ax, bx
+    jg .checa_e2
+    
+    mov ax, tiro_y
+    cmp ax, enemy1_y
+    jl .checa_e2
+    mov bx, enemy1_y
+    add bx, 13      ; Altura do inimigo
+    cmp ax, bx
+    jg .checa_e2
+
+    ; HIT INIMIGO 1
+    call respawn_enemy1 ; Reseta posicao
+    mov tiro_ativo, 0   ; Some o tiro
+    call soma_100_pontos ; +100 pontos
+    jmp .fim_colisao    ; Sai da rotina
+
+.checa_e2:
+    ; Checa Inimigo 2
+    mov ax, tiro_x
+    cmp ax, enemy2_x
+    jl .checa_e3
+    mov bx, enemy2_x
+    add bx, 29
+    cmp ax, bx
+    jg .checa_e3
+    
+    mov ax, tiro_y
+    cmp ax, enemy2_y
+    jl .checa_e3
+    mov bx, enemy2_y
+    add bx, 13
+    cmp ax, bx
+    jg .checa_e3
+
+    ; HIT INIMIGO 2
+    call respawn_enemy2
+    mov tiro_ativo, 0
+    call soma_100_pontos
+    jmp .fim_colisao
+
+.checa_e3:
+    ; Checa Inimigo 3
+    mov ax, tiro_x
+    cmp ax, enemy3_x
+    jl .fim_colisao
+    mov bx, enemy3_x
+    add bx, 29
+    cmp ax, bx
+    jg .fim_colisao
+    
+    mov ax, tiro_y
+    cmp ax, enemy3_y
+    jl .fim_colisao
+    mov bx, enemy3_y
+    add bx, 13
+    cmp ax, bx
+    jg .fim_colisao
+
+    ; HIT INIMIGO 3
+    call respawn_enemy3
+    mov tiro_ativo, 0
+    call soma_100_pontos
+
+.fim_colisao:
+    ret
+verifica_colisao_tiro endp
+
+; ===== PONTUA??O =====
+soma_100_pontos proc
+    ; Soma 100 pontos (Adiciona 1 na Centena [indice 2])
+    push bx
+    call adiciona_centena_1
+    call atualiza_hud_pontuacao
+    pop bx
+    ret
+soma_100_pontos endp
+
 atualiza_score_fase proc
     push ax
     push bx
@@ -511,99 +599,29 @@ atualiza_score_fase proc
     mov ds, ax
     mov es, ax
 
-    ; Define quanto somar baseado na fase
     cmp fase_atual, 1
     je .soma_10
     cmp fase_atual, 2
     je .soma_15
     cmp fase_atual, 3
     je .soma_20
-    jmp .atualiza_hud
+    jmp .atualiza_hud_label
 
 .soma_10:
-    ; Fase 1: +10 pontos (soma 1 na dezena)
     call adiciona_dezena_1
-    jmp .atualiza_hud
-
+    jmp .atualiza_hud_label
 .soma_15:
-    ; Fase 2: +15 pontos (soma 5 na unidade, 1 na dezena)
     call adiciona_unidade_5
     call adiciona_dezena_1
-    jmp .atualiza_hud
-
+    jmp .atualiza_hud_label
 .soma_20:
-    ; Fase 3: +20 pontos (soma 1 na dezena duas vezes)
     call adiciona_dezena_1
     call adiciona_dezena_1
-    jmp .atualiza_hud
+    jmp .atualiza_hud_label
 
-; Sub-rotinas auxiliares
-adiciona_unidade_5:
-    mov bx, 4           ; Indice 4 (Unidade)
-    add byte ptr [campo3 + bx], 5
-    cmp byte ptr [campo3 + bx], '9'
-    jle .fim_soma_u
-    sub byte ptr [campo3 + bx], 10
-    call propaga_carry_dezena
-.fim_soma_u:
-    ret
-
-adiciona_dezena_1:
-    mov bx, 3           ; Indice 3 (Dezena)
-    inc byte ptr [campo3 + bx]
-    cmp byte ptr [campo3 + bx], '9'
-    jle .fim_soma_d
-    sub byte ptr [campo3 + bx], 10
-    call propaga_carry_centena
-.fim_soma_d:
-    ret
-
-; Propaga??o do "vai um"
-propaga_carry_dezena:
-    mov bx, 3
-    inc byte ptr [campo3 + bx]
-    cmp byte ptr [campo3 + bx], '9'
-    jle .fim_propaga
-    sub byte ptr [campo3 + bx], 10
-    ; cai para centena...
-
-propaga_carry_centena:
-    mov bx, 2
-    inc byte ptr [campo3 + bx]
-    cmp byte ptr [campo3 + bx], '9'
-    jle .fim_propaga
-    sub byte ptr [campo3 + bx], 10
-    ; cai para milhar...
-
-propaga_carry_milhar:
-    mov bx, 1
-    inc byte ptr [campo3 + bx]
-    cmp byte ptr [campo3 + bx], '9'
-    jle .fim_propaga
-    sub byte ptr [campo3 + bx], 10
-    ; cai para dezena de milhar...
-
-propaga_carry_dez_milhar:
-    mov bx, 0
-    inc byte ptr [campo3 + bx]
-    cmp byte ptr [campo3 + bx], '9'
-    jle .fim_propaga
-    mov byte ptr [campo3 + bx], '9' ; Trava em 99999
-.fim_propaga:
-    ret
-
-.atualiza_hud:
-    ; Redesenha o Score com exatos 5 digitos
-    mov bp, OFFSET campo3
-    mov ah, 13h
-    mov al, 0h
-    xor bh, bh
-    mov bl, 2
-    mov cx, 5  ; FIXO 5
-    mov dh, 0
-    mov dl, 6  ; Posi??o ajustada
-    int 10h
-
+.atualiza_hud_label:
+    call atualiza_hud_pontuacao
+    
     pop ds
     pop es
     pop bp
@@ -613,5 +631,91 @@ propaga_carry_dez_milhar:
     pop ax
     ret
 atualiza_score_fase endp
+
+atualiza_hud_pontuacao proc
+    push ax
+    push bx
+    push cx
+    push dx
+    push bp
+    
+    mov bp, OFFSET campo3
+    mov ah, 13h
+    mov al, 0h
+    xor bh, bh
+    mov bl, 2
+    mov cx, 5  
+    mov dh, 0
+    mov dl, 6 
+    int 10h
+
+    pop bp
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    ret
+atualiza_hud_pontuacao endp
+
+; Sub-rotinas auxiliares de soma
+adiciona_unidade_5:
+    mov bx, 4           
+    add byte ptr [campo3 + bx], 5
+    cmp byte ptr [campo3 + bx], '9'
+    jle .fim_soma_u
+    sub byte ptr [campo3 + bx], 10
+    call propaga_carry_dezena
+.fim_soma_u:
+    ret
+
+adiciona_dezena_1:
+    mov bx, 3           
+    inc byte ptr [campo3 + bx]
+    cmp byte ptr [campo3 + bx], '9'
+    jle .fim_soma_d
+    sub byte ptr [campo3 + bx], 10
+    call propaga_carry_centena
+.fim_soma_d:
+    ret
+
+adiciona_centena_1:
+    mov bx, 2           
+    inc byte ptr [campo3 + bx]
+    cmp byte ptr [campo3 + bx], '9'
+    jle .fim_soma_c
+    sub byte ptr [campo3 + bx], 10
+    call propaga_carry_milhar
+.fim_soma_c:
+    ret
+
+propaga_carry_dezena:
+    mov bx, 3
+    inc byte ptr [campo3 + bx]
+    cmp byte ptr [campo3 + bx], '9'
+    jle .fim_propaga
+    sub byte ptr [campo3 + bx], 10
+    ; fallthrough
+propaga_carry_centena:
+    mov bx, 2
+    inc byte ptr [campo3 + bx]
+    cmp byte ptr [campo3 + bx], '9'
+    jle .fim_propaga
+    sub byte ptr [campo3 + bx], 10
+    ; fallthrough
+propaga_carry_milhar:
+    mov bx, 1
+    inc byte ptr [campo3 + bx]
+    cmp byte ptr [campo3 + bx], '9'
+    jle .fim_propaga
+    sub byte ptr [campo3 + bx], 10
+    ; fallthrough
+propaga_carry_dez_milhar:
+    mov bx, 0
+    inc byte ptr [campo3 + bx]
+    cmp byte ptr [campo3 + bx], '9'
+    jle .fim_propaga
+    mov byte ptr [campo3 + bx], '9' 
+.fim_propaga:
+    ret
 
 fase1 endp

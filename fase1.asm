@@ -4,6 +4,7 @@
 ; fase1_inicio: executa o loop principal do jogo
 fase1 proc
     ; ====== CONTINUA JOGO ======
+    mov tempo_restante, 60
     call carrega_hud
     call desenha_superficie_fase
 
@@ -16,6 +17,7 @@ fase1 proc
 
 JOGO_LOOP:
     
+    call verifica_colisao_player
     call desenha_superficie_fase
     
     ; 1a. Apaga Inimigos
@@ -150,25 +152,25 @@ sprite_linha endp
 ;=========================
 ; enemy 1
 ;=========================
-dec enemy1_x
-cmp enemy1_x, -29
-jg skip_enemy1
+    dec enemy1_x
+    cmp enemy1_x, -29
+    jg skip_enemy1
     call respawn_enemy1
 skip_enemy1:
 ;=========================
 ; enemy 2
 ;=========================
-dec enemy2_x
-cmp enemy2_x, -29
-jg skip_enemy2
+    dec enemy2_x
+    cmp enemy2_x, -29
+    jg skip_enemy2
     call respawn_enemy2
 skip_enemy2:
 ;=========================
 ; enemy 3
 ;=========================
-dec enemy3_x
-cmp enemy3_x, -29
-jg skip_enemy3
+    dec enemy3_x
+    cmp enemy3_x, -29
+    jg skip_enemy3
     call respawn_enemy3
 skip_enemy3:
 
@@ -321,7 +323,16 @@ jmp JOGO_LOOP
     jmp .continuar_mudar_inimigo
    
 .fim_de_jogo_timer:
+    cmp fase_atual, 2
+    je .vai_fase3
+    cmp fase_atual, 3
+    je .vencedor
     jmp .Fase2
+.vai_fase3:
+    jmp .Fase3  
+.vencedor:
+    inc fase_atual
+    jmp vencedor
 
 ; === ROTINAS DE RESPAWN ===
 respawn_enemy1 proc
@@ -382,101 +393,6 @@ atualiza_tempo_hud proc
     ret
 atualiza_tempo_hud endp
 
-desenha_superficie_fase proc
-    push ax
-    push bx
-    push cx
-    push dx
-    push si
-    push di
-    push ds
-    push es
-
-    mov ax, @data
-    mov ds, ax
-    mov ax, 0A000h
-    mov es, ax
-
-    mov ax, 139
-    mov dx, 0
-    call calcula_posicao
-
-    mov cx, 21000
-    cmp fase_atual, 2
-    je .mudar_cor_superficie
-    mov al, 1
-.continuar_mudar_cor_superficie:
-    rep stosb
-    
-    cmp fase_atual, 2
-    je .mudar_superficie
-
-    mov si, OFFSET superficie_fase1
-.continua_mudar_superficie:
-    mov ax, 0A000h
-    mov es, ax
-
-    mov ax, 119
-    mov dx, 0
-    call calcula_posicao
-
-    mov bx, 490
-    mov cx, 20
-    mov ax, desloc_superficie
-    mov bp, ax
-
-linha_loop:
-    push cx
-    push si
-    push di
-    mov cx, 320
-    mov dx, bp
-    mov ax, dx
-    add si, ax
-coluna_loop:
-    lodsb
-    stosb
-    inc dx
-    cmp dx, bx
-    jb skip_reset
-    sub dx, bx
-    sub si, bx
-skip_reset:
-    loop coluna_loop
-
-    pop di
-    add di, 320
-    pop si
-    add si, 490
-    pop cx
-    loop linha_loop
-
-    mov ax, desloc_superficie
-    inc ax
-    cmp ax, 490
-    jb ok_scroll
-    xor ax, ax
-ok_scroll:
-    mov desloc_superficie, ax
-
-    pop es
-    pop ds
-    pop di
-    pop si
-    pop dx
-    pop cx
-    pop bx
-    pop ax
-    ret
-desenha_superficie_fase endp
-
-.mudar_superficie:
-    mov si, OFFSET superficie_fase2 
-    jmp .continua_mudar_superficie
-.mudar_cor_superficie:
-    mov al, 6
-    jmp .continuar_mudar_cor_superficie
-
 random proc
     mov ax, random_seed
     mov dx, 25173
@@ -513,6 +429,12 @@ verifica_colisao_tiro proc
     ; Verifica Fase
     cmp fase_atual, 2
     je .hit_fase2_e1
+    
+    mov ax, enemy1_y
+    mov dx, enemy1_x
+    call calcula_posicao
+    mov bx, OFFSET sprite_vazio
+    call desenha_13x29
     
     ; Fase 1 ou 3 (Destrutivel)
     call respawn_enemy1
@@ -554,6 +476,12 @@ verifica_colisao_tiro proc
     cmp fase_atual, 2
     je .hit_fase2_e2
     
+    mov ax, enemy2_y
+    mov dx, enemy2_x
+    call calcula_posicao
+    mov bx, OFFSET sprite_vazio
+    call desenha_13x29
+    
     call respawn_enemy2
     mov tiro_ativo, 0
     cmp fase_atual, 3
@@ -589,6 +517,12 @@ verifica_colisao_tiro proc
     ; HIT Inimigo 3 detectado
     cmp fase_atual, 2
     je .hit_fase2_e3
+    
+    mov ax, enemy3_y
+    mov dx, enemy3_x
+    call calcula_posicao
+    mov bx, OFFSET sprite_vazio
+    call desenha_13x29
     
     call respawn_enemy3
     mov tiro_ativo, 0

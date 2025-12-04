@@ -1,3 +1,4 @@
+;desenha.asm
 .code
 ;Converte coordenadas
 calcula_posicao proc
@@ -175,6 +176,101 @@ desenha_pixel proc
     ret
 desenha_pixel endp
 
+desenha_superficie_fase proc
+    push ax
+    push bx
+    push cx
+    push dx
+    push si
+    push di
+    push ds
+    push es
+
+    mov ax, @data
+    mov ds, ax
+    mov ax, 0A000h
+    mov es, ax
+
+    mov ax, 139
+    mov dx, 0
+    call calcula_posicao
+
+    mov cx, 21000
+    cmp fase_atual, 2
+    je .mudar_cor_superficie
+    mov al, 1
+.continuar_mudar_cor_superficie:
+    rep stosb
+    
+    cmp fase_atual, 2
+    je .mudar_superficie
+
+    mov si, OFFSET superficie_fase1
+.continua_mudar_superficie:
+    mov ax, 0A000h
+    mov es, ax
+
+    mov ax, 119
+    mov dx, 0
+    call calcula_posicao
+
+    mov bx, 490
+    mov cx, 20
+    mov ax, desloc_superficie
+    mov bp, ax
+
+linha_loop:
+    push cx
+    push si
+    push di
+    mov cx, 320
+    mov dx, bp
+    mov ax, dx
+    add si, ax
+coluna_loop:
+    lodsb
+    stosb
+    inc dx
+    cmp dx, bx
+    jb skip_reset
+    sub dx, bx
+    sub si, bx
+skip_reset:
+    loop coluna_loop
+
+    pop di
+    add di, 320
+    pop si
+    add si, 490
+    pop cx
+    loop linha_loop
+
+    mov ax, desloc_superficie
+    inc ax
+    cmp ax, 490
+    jb ok_scroll
+    xor ax, ax
+ok_scroll:
+    mov desloc_superficie, ax
+
+    pop es
+    pop ds
+    pop di
+    pop si
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    ret
+desenha_superficie_fase endp
+
+.mudar_superficie:
+    mov si, OFFSET superficie_fase2 
+    jmp .continua_mudar_superficie
+.mudar_cor_superficie:
+    mov al, 6
+    jmp .continuar_mudar_cor_superficie
+
 ; Carrega HUD (ATUALIZADO PARA 5 DIGITOS)
 carrega_hud proc
 
@@ -225,21 +321,29 @@ carrega_hud proc
     mov dh,0
     mov dl,38 ; Ajustado para o fim da tela
     int 10h 
-  
+    
+    cmp qtd_vidas, 2
+    je .qtd2
+    cmp qtd_vidas, 1
+    je .qtd1
+    cmp qtd_vidas, 0
+    ;jmp gameover
+    
+    mov ax, 0
+    mov dx, 181
+    call calcula_posicao
+    mov bx, OFFSET vidas
+    call desenha_vida
+.qtd2:  
     mov ax, 0
     mov dx, 151
     call calcula_posicao
     mov bx, OFFSET vidas
     call desenha_vida
     
+.qtd1:    
     mov ax, 0
     mov dx, 121
-    call calcula_posicao
-    mov bx, OFFSET vidas
-    call desenha_vida
-    
-    mov ax, 0
-    mov dx, 181
     call calcula_posicao
     mov bx, OFFSET vidas
     call desenha_vida

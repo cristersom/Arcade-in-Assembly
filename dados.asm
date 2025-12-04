@@ -13,7 +13,7 @@
     msg      db "                            __   __   " , CR, NL
              db "    ___ ___________ ___ _  / /  / /__ " , CR, NL
              db "   (_-</ __/ __/ _ `/  ' \/ _ \/ / -_)", CR, NL
-             db "  /___/\__/_/  \_,_/_/_/_.__/_/\__/ " 
+             db "  /___/\__/_/  \_,_/_/_/_.__/_/\__/   " 
 
     TAM_MSG equ $-msg 
 
@@ -50,6 +50,7 @@
     sprite_vazio db (13*29) dup(0) ; Sprite preto
     sprite_coluna_vazia db 13 DUP(0)
     sprite_linha_vazia db 29 DUP(0)
+    sprite_vida_vazia db (7*19) dup(0)
                       
     ; Coordenadas
     nave_aliada_x dw 10 
@@ -74,13 +75,20 @@
     desloc_superficie dw 0
     random_seed dw 32141
     
+    COLISAO   db 0
+    player_morto db 0
+    player_venceu db 0
+    
     rastro dw 0 
     
     qtd_vidas db 3    
     vidas_max db 3    
 
     player_x dw 10  
-    player_y dw 91  
+    player_y dw 90  
+    
+    QTD_INIMIGOS equ 3
+
 
     enemy1_x dw 90  
     enemy1_y dw 20
@@ -98,7 +106,7 @@
     game_delay_cx = 0
     game_delay_dx = 3000
 
-    tempo_restante  db 60
+    tempo_restante  db 5
     timer_counter   db 67 
     
     ; --- Constantes de Limite da Tela ---
@@ -195,7 +203,23 @@ msg_fase3    db "   _______   ________  ____", CR, NL
              db " / _// __ |_\ \/ _/  _/_ < ", CR, NL
              db "/_/ /_/ |_/___/___/ /____/ ", CR, NL, 0
                                                                   
-TAM_FASE3 equ ($ - msg_fase3)0                                        
+TAM_FASE3 equ ($ - msg_fase3)0         
+ 
+msg_game_over    db   "  ___ _ ___ _ __ _  ___    ",CR, NL
+                 db   " / _ `// _ `//  ' \/ -_)   ",CR, NL
+                 db   " \_, / \_,_//_/_/_/\__/    ",CR, NL
+                 db   "/___/  ___  _  __ ___  ____",CR, NL
+                 db   "      / _ \| |/ // -_)/ __/",CR, NL
+                 db   "      \___/|___/ \__//_/   ", CR, NL, 0
+                                                                                                                
+TAM_GAME_OVER equ ($ - msg_game_over)0  
+
+msg_vencedor   db   "  _      _______  ___  _________  ",CR, NL
+               db   " | | /| / /  _/ |/ / |/ / __/ _ \ ",CR, NL
+               db   " | |/ |/ // //    /    / _// , _/ ",CR, NL
+               db   " |__/|__/___/_/|_/_/|_/___/_/|_|  ", CR, NL, 0
+                                                                                                           
+TAM_VENCEDOR equ ($ - msg_vencedor)0                                
 
 
 ;20*490
@@ -263,6 +287,7 @@ superficie_fase2 db 0,0,0,0,0,0,0,0,0,C,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 ;                 db 0,0,4,4,4,4,4,4,4,4,0,0,7,7,B,B,B,B,B,B,B,B,7,7,
 ;                 db 0,0,0,0,0,0,0,0,0,0,0,0,7,7,B,B,B,B,B,B,B,B,7,7,
 ;                 db 0,0,0,0,0,0,0,0,0,0,0,0,7,7,B,B,B,B,B,B,B,B,7,7,
+;                 db 4,4,4,4,0,0,0,0,4,4,4,4,7,7,B,B,B,B,B,B,B,B,7,7,
 ;                 db 4,4,4,4,0,0,0,0,4,4,4,4,7,7,B,B,B,B,B,B,B,B,7,7,
 ;                 db 4,4,4,4,0,0,0,0,4,4,4,4,7,7,B,B,B,B,B,B,B,B,7,7,
 ;                 db 4,4,4,4,0,0,0,0,4,4,4,4,7,7,B,B,B,B,B,B,B,B,7,7,

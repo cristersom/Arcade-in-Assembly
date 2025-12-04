@@ -17,6 +17,7 @@ main:
     call IniciarVideo
 MainLoop:
     mov player_morto, 0
+    mov player_venceu, 0
     mov enemy1_x, 90  
     mov enemy1_y, 20
     mov enemy2_x, 190 

@@ -242,11 +242,28 @@ fase_inicio proc
     ; ====== IMPRIMIR TEXTO ======
     mov ax, @data
     mov ds, ax
+    cmp player_morto, 1
+    je .troca_texto_fim
     cmp fase_atual, 2
     je .troca_texto_fase2
     cmp fase_atual, 3
     je .troca_texto_fase3
+    cmp player_venceu, 1
+    je .troca_texto_venceu
     mov si, OFFSET msg_fase1
+    jmp .continua_texto_fase
+.troca_texto_fim:
+    mov si, OFFSET msg_game_over
+    jmp .continua_texto_fase
+.troca_texto_fase2:
+    mov si, OFFSET msg_fase2
+    jmp .continua_texto_fase
+.troca_texto_fase3:
+    mov si, OFFSET msg_fase3
+    jmp .continua_texto_fase
+.troca_texto_venceu:
+    mov si, OFFSET msg_vencedor
+    jmp .continua_texto_fase
     
 .continua_texto_fase:
     mov dh, 9          ; linha inicial da tela (vertical)
@@ -285,11 +302,25 @@ fase_inicio proc
     je .NextLine
     mov ah, 0Eh
     mov bh, 0
+    cmp player_morto, 1
+    je .troca_cor_fim
     cmp fase_atual, 2
     je .troca_cor_texto_fase2
     cmp fase_atual, 3
     je .troca_cor_texto_fase3
     mov bl, A         ; cor
+    jmp .continua_cor_texto
+
+.troca_cor_fim:
+    mov bl, 4
+    jmp .continua_cor_texto
+.troca_cor_texto_fase2:
+    mov bl, 6
+    jmp .continua_cor_texto
+.troca_cor_texto_fase3:
+    mov bl, 7
+    jmp .continua_cor_texto      
+    
 .continua_cor_texto:
     int 10h
     jmp .PrintChars
@@ -300,7 +331,12 @@ fase_inicio proc
     jmp .PrintLine
 
 .DonePrint:
+    cmp player_venceu, 1
+    jne .continua_para_delay
+    
+    ;TENTAR COLOCAR O SCORE AQUI
 
+.continua_para_delay:    
     ; ====== DELAY 4 SEGUNDOS ======
     mov ax, 0040h
     mov es, ax
@@ -318,20 +354,20 @@ fase_inicio proc
     mov al, 0
     mov cx, 320*200
     rep stosb
+    cmp player_morto, 1
+    je .fim_fase
+    cmp player_venceu, 1
+    je .fim_fase
     call fase1
+        
+.fim_fase:
+    jmp MainLoop
+     
 fase_inicio endp
-
-.troca_texto_fase2:
-    mov si, OFFSET msg_fase2
-    jmp .continua_texto_fase
-.troca_texto_fase3:
-    mov si, OFFSET msg_fase3
-    jmp .continua_texto_fase
-.troca_cor_texto_fase2:
-    mov bl, 6
-    jmp .continua_cor_texto
-.troca_cor_texto_fase3:
-    mov bl, 7
-    jmp .continua_cor_texto
     
+game_over:
+    call fase_inicio
+vencedor:
+    mov player_venceu, 1
+    call fase_inicio
     

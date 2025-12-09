@@ -3,9 +3,11 @@
 
 ;-------------------MENU-------------------
 
-; Funcao: Atualiza o seletor visual do menu (seta ou destaque)
-; Parametros de entrada: Variavel global 'menu_selecionado'
-; Parametros de saida: Nenhum (atualiza video diretamente)
+; -------------------------------------------------------------------
+; Funcao: Atualiza visualmente a selecao do menu (Jogar/Sair).
+; Parametros de entrada: Variavel global menu_selecionado.
+; Parametros de saida: Escreve strings coloridas na tela via INT 10h.
+; -------------------------------------------------------------------
 atualiza_menu proc
 
     cmp menu_selecionado, 0        ; Compara para saber qual esta selecionado
@@ -57,9 +59,11 @@ atualiza_menu proc
     ret
 atualiza_menu endp
 
-; Funcao: Gerencia a logica do menu principal (input e renderizacao)
-; Parametros de entrada: Nenhum
-; Parametros de saida: Retorna AL = 1 (Jogar) ou AL = 0 (Sair)
+; -------------------------------------------------------------------
+; Funcao: Exibe e gerencia o menu principal do jogo.
+; Parametros de entrada: Entrada do teclado (INT 16h).
+; Parametros de saida: Retorna AL = 1 para Jogar, AL = 0 para Sair.
+; -------------------------------------------------------------------
 menu_principal proc
     push bx
     push cx
@@ -110,7 +114,7 @@ MenuLoop:
     jne .checar_enter
     jmp .tecla_especial_menu
     
-; Checa qual op??o o player escolheu  
+; Checa qual opcao o player escolheu  
 .checar_enter:
     cmp ah, 1Ch
     jne .pular_teclado
@@ -123,7 +127,7 @@ MenuLoop:
 
     jmp .pular_teclado
 
-; Retorna AL com o valor da op??o selecinada: 0 - Sair, 1 - Jogar   
+; Retorna AL com o valor da opcao selecinada: 0 - Sair, 1 - Jogar   
 .ret_sair:
     mov al, 0
     jmp .retorna_menu
@@ -142,7 +146,7 @@ MenuLoop:
     pop bx
     ret
 
-; Mantem a anima??o do menu    
+; Mantem a animacao do menu    
 .pular_teclado:
 
     ; Apaga o rastro da esquerda da nave
@@ -152,7 +156,7 @@ MenuLoop:
     mov bx, OFFSET sprite_coluna_vazia
     call desenha_coluna
 
-    ; Come?a desenhando a nave alien indo para a direita
+    ; Comeca desenhando a nave alien indo para a direita
     mov ax, nave_alien_y
     mov dx, nave_alien_x
     cmp direcao_atual2,1
@@ -160,18 +164,18 @@ MenuLoop:
     add dx, 28
     
 .continua_sprite:
-    ; Se a nave alien est? indo para a direita apaga o rastro da esquerda
+    ; Se a nave alien esta indo para a direita apaga o rastro da esquerda
     call calcula_posicao
     mov bx, OFFSET sprite_coluna_vazia
     call desenha_coluna
     
-    ; Atribui a dire??o para as spritesa para a direita por padr?o 
+    ; Atribui a direcao para as spritesa para a direita por padrao 
     mov ax, direcao_atual
     add nave_aliada_x, ax 
-    neg ax                 ; Inverte a dire??o para o meteoro
+    neg ax                 ; Inverte a direcao para o meteoro
     add meteoro_x, ax
     
-    ; Usa outra variavel para a nave alien para n?o afetar a aliada
+    ; Usa outra variavel para a nave alien para nao afetar a aliada
     mov ax, direcao_atual2
     add nave_alien_x, ax
 
@@ -190,7 +194,7 @@ MenuLoop:
     mov direcao_atual2, ax
     jmp .desenhar_local
     
-; Desenha todos os sprites em suas devidas localiza??es em X e Y    
+; Desenha todos os sprites em suas devidas localizacoes em X e Y    
 .desenhar_local:
     mov ax, meteoro_y
     mov dx, meteoro_x
@@ -249,9 +253,11 @@ menu_principal endp
 
 ;----------FASES----------
 
-; Funcao: Prepara e exibe a tela de transicao de fase, game over ou vitoria
-; Parametros de entrada: Variaveis globais 'fase_atual', 'player_morto', 'player_venceu'
-; Parametros de saida: Nenhum
+; -------------------------------------------------------------------
+; Funcao: Prepara e exibe a tela de inicio de fase, Game Over ou Vitoria.
+; Parametros de entrada: Estado global (fase_atual, player_morto, player_venceu).
+; Parametros de saida: Exibe texto na tela e aguarda delay.
+; -------------------------------------------------------------------
 fase_inicio proc
     push ax
     push bx
@@ -262,7 +268,7 @@ fase_inicio proc
     push bp
     push es
 
-    ; Come?a apagando tudo que tem na tela (tela preta)
+    ; Comeca apagando tudo que tem na tela (tela preta)
     mov ax, 0A000h
     mov es, ax
     xor di, di
@@ -302,7 +308,7 @@ fase_inicio proc
     mov dh, 9          ; Linha inicial da tela (vertical)
     
 .PrintLine:
-    push si            ; Salvar posi??o atual da string
+    push si            ; Salvar posicao atual da string
     xor cx, cx         ; Contador de caracteres da linha
 
 ; Conta os caracteres     
@@ -329,7 +335,7 @@ fase_inicio proc
     mov dl, bl         ; Coluna horizontal
     int 10h
 
-    pop si             ; Restaurar posi??o da linha
+    pop si             ; Restaurar posicao da linha
 
 ; Imprime os caracteres da sprite 
 .PrintChars:
@@ -346,7 +352,7 @@ fase_inicio proc
     je .troca_cor_texto_fase2
     cmp fase_atual, 3
     je .troca_cor_texto_fase3
-    mov bl, A                    ; Cor padr?o (verde claro)
+    mov bl, A                    ; Cor padrao (verde claro)
     jmp .continua_cor_texto
 
 .troca_cor_fim:
@@ -364,7 +370,7 @@ fase_inicio proc
     jmp .PrintChars
 
 .NextLine:
-    inc dh             ; Pr?xima linha vertical
+    inc dh             ; Proxima linha vertical
     lodsb              ; Pular LF
     jmp .PrintLine
 
@@ -397,7 +403,7 @@ fase_inicio proc
     je .fim_fase
     cmp player_venceu, 1  ; Se o player venceu acaba o jogo
     je .fim_fase
-    call fase1            ; Se o player estiver vivo e n?o acabou o jogo, continua normalmente 
+    call fase1            ; Se o player estiver vivo e nao acabou o jogo, continua normalmente 
         
 ; Volta para o menu quando acabar a fase
 .fim_fase:
@@ -405,7 +411,11 @@ fase_inicio proc
     
 fase_inicio endp
     
-; Marca que o jogador venceu a fase e retorna ao in?cio do jogo
+; -------------------------------------------------------------------
+; Funcao: Marca o jogador como vencedor e chama a tela de vitoria.
+; Parametros de entrada: Nenhum.
+; Parametros de saida: Atualiza player_venceu=1.
+; -------------------------------------------------------------------
 vencedor:
     mov player_venceu, 1
     call fase_inicio

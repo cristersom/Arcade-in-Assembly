@@ -1,9 +1,11 @@
 ; colisao.asm
 .code
 
-; Funcao: Verifica colisoes entre o jogador e inimigos ou solo
-; Parametros de entrada: Coordenadas globais do player e inimigos
-; Parametros de saida: Decrementa 'qtd_vidas' se houver colisao
+; -------------------------------------------------------------------
+; Funcao: Verifica a colisao da nave do jogador com inimigos e com o solo.
+; Parametros de entrada: Variaveis globais (player_x, player_y, enemyX_x, enemyX_y)
+; Parametros de saida: Altera qtd_vidas, chama reseta_nave_aliada e perde_vida se colidir.
+; -------------------------------------------------------------------
 verifica_colisao_player proc
 
 checa_enemy1:
@@ -120,9 +122,11 @@ sem4:
 
 verifica_colisao_player endp
 
-; Funcao: Gerencia a perda de vidas e atualiza a HUD
-; Parametros de entrada: Variavel 'qtd_vidas'
-; Parametros de saida: Atualiza 'player_morto' se vidas chegarem a 0
+; -------------------------------------------------------------------
+; Funcao: Gerencia a perda de vida, atualiza a HUD e checa Game Over.
+; Parametros de entrada: Variavel global qtd_vidas.
+; Parametros de saida: Atualiza visual das vidas na tela, define player_morto=1 se vidas=0.
+; -------------------------------------------------------------------
 perde_vida proc
 
     ; Apaga todas as vidas sempre que tiver uma colisao  
@@ -182,9 +186,11 @@ fim_perde_vida:
 
 perde_vida endp
 
-; Funcao: Reposiciona a nave na coordenada inicial apos morte
-; Parametros de entrada: Coordenadas atuais da nave
-; Parametros de saida: Reseta 'player_x' e 'player_y'
+; -------------------------------------------------------------------
+; Funcao: Reseta a posicao da nave aliada apos uma colisao.
+; Parametros de entrada: Variaveis globais player_x, player_y.
+; Parametros de saida: Define player_x=10, player_y=90 e apaga a sprite na posicao antiga.
+; -------------------------------------------------------------------
 reseta_nave_aliada proc
     mov ax, player_y
     mov dx, player_x

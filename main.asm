@@ -7,11 +7,15 @@ include dados.asm     ; Variaveis, constantes e sprites
 include desenha.asm   ; Rotinas de desenho na tela
 include telas.asm     ; Telas do jogo (menu, game over, vitoria, etc.)
 include fase1.asm     ; Logica e execucao das fases do jogo
-include colisao.asm   ; Rotinas de deteccao de colis?o
+include colisao.asm   ; Rotinas de deteccao de colisao
 
 .code
 
-; Inicia o modo video
+; -------------------------------------------------------------------
+; Funcao: Ponto de entrada do programa. Configura segmentos e gerencia o loop principal.
+; Parametros de entrada: Nenhum
+; Parametros de saida: Nenhum (retorna ao DOS ao finalizar)
+; -------------------------------------------------------------------
 main:
     mov ax, @data
     mov ds, ax
@@ -56,7 +60,6 @@ MainLoop:
     
 ; Dados da fase 2
 .Fase2:
-
     inc fase_atual          ; Incrementa o contador de fases (fase 2)
     mov random_seed, 12345  ; Seleciona uma seed para melhor spawn dos inimigos 
     
@@ -87,10 +90,9 @@ MainLoop:
     jmp MainLoop           ; Quando finalizar a fase 3, volta para o menu
 
 ; -------------------------------------------------------------------
-; Funcao: IniciarVideo
-; Descricao: Define o modo de video VGA 320x200 (Mode 13h)
+; Funcao: Inicia o modo de video VGA 320x200 (Modo 13h)
 ; Parametros de entrada: Nenhum
-; Parametros de saida: Nenhum
+; Parametros de saida: Altera o modo de video da BIOS (INT 10h/AH=00h)
 ; -------------------------------------------------------------------
 IniciarVideo proc
     mov ax, 0013h
@@ -99,10 +101,9 @@ IniciarVideo proc
 IniciarVideo endp
 
 ; -------------------------------------------------------------------
-; Funcao: FinalizarVideo
-; Descricao: Retorna para o modo texto padrao (Mode 03h)
+; Funcao: Finaliza o modo grafico retornando ao modo texto
 ; Parametros de entrada: Nenhum
-; Parametros de saida: Nenhum
+; Parametros de saida: Restaura modo de texto padrao (INT 10h/AH=00h)
 ; -------------------------------------------------------------------
 FinalizarVideo proc
     mov ax, 0003h

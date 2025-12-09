@@ -2,10 +2,9 @@
 .code
 
 ; -------------------------------------------------------------------
-; Funcao: fase1
-; Descricao: Loop principal de execucao do jogo (processa entrada e desenha)
-; Parametros de entrada: Nenhum
-; Parametros de saida: Nenhum
+; Funcao: Executa o loop principal de jogabilidade (Fase 1, 2 e 3).
+; Parametros de entrada: Variaveis globais de estado do jogo (fase_atual, player_x, etc.).
+; Parametros de saida: Gerencia todo o fluxo do jogo, movimentacao e desenho.
 ; -------------------------------------------------------------------
 fase1 proc
     ; ====== CONTINUA JOGO ======
@@ -50,12 +49,7 @@ JOGO_LOOP:
     call sprite_coluna
     jmp .skip
  
-; -------------------------------------------------------------------
-; Funcao: sprite_coluna
-; Descricao: Wrapper para desenha_coluna usando sprite vazio
-; Parametros de entrada: AX=Y, DX=X
-; Parametros de saida: Nenhum
-; -------------------------------------------------------------------
+; Rotinas internas de limpeza de sprite
 sprite_coluna proc
     call calcula_posicao
     mov bx, OFFSET sprite_coluna_vazia
@@ -63,12 +57,6 @@ sprite_coluna proc
     ret
 sprite_coluna endp
 
-; -------------------------------------------------------------------
-; Funcao: sprite_linha
-; Descricao: Wrapper para desenha_linha usando sprite vazio
-; Parametros de entrada: AX=Y, DX=X
-; Parametros de saida: Nenhum
-; -------------------------------------------------------------------
 sprite_linha proc
     call calcula_posicao
     mov bx, OFFSET sprite_linha_vazia
@@ -162,7 +150,7 @@ sprite_linha endp
 
 .continua_loop:
 
-    ; === VERIFICA COLIS?O DO TIRO (ATUALIZADO) ===
+    ; === VERIFICA COLISAO DO TIRO (ATUALIZADO) ===
     call verifica_colisao_tiro
     ; =============================================
 
@@ -354,10 +342,9 @@ jmp JOGO_LOOP
 ; === ROTINAS DE RESPAWN ===
 
 ; -------------------------------------------------------------------
-; Funcao: respawn_enemy1
-; Descricao: Define nova posicao aleatoria para o inimigo 1
-; Parametros de entrada: Nenhum
-; Parametros de saida: Nenhum (atualiza enemy1_x e enemy1_y)
+; Funcao: Reposiciona o Inimigo 1 aleatoriamente
+; Parametros de entrada: Variavel global random_seed
+; Parametros de saida: Atualiza enemy1_x e enemy1_y
 ; -------------------------------------------------------------------
 respawn_enemy1 proc
     call random
@@ -371,10 +358,9 @@ respawn_enemy1 proc
 respawn_enemy1 endp
 
 ; -------------------------------------------------------------------
-; Funcao: respawn_enemy2
-; Descricao: Define nova posicao aleatoria para o inimigo 2
-; Parametros de entrada: Nenhum
-; Parametros de saida: Nenhum (atualiza enemy2_x e enemy2_y)
+; Funcao: Reposiciona o Inimigo 2 aleatoriamente
+; Parametros de entrada: Variavel global random_seed
+; Parametros de saida: Atualiza enemy2_x e enemy2_y
 ; -------------------------------------------------------------------
 respawn_enemy2 proc
     call random
@@ -388,10 +374,9 @@ respawn_enemy2 proc
 respawn_enemy2 endp
 
 ; -------------------------------------------------------------------
-; Funcao: respawn_enemy3
-; Descricao: Define nova posicao aleatoria para o inimigo 3
-; Parametros de entrada: Nenhum
-; Parametros de saida: Nenhum (atualiza enemy3_x e enemy3_y)
+; Funcao: Reposiciona o Inimigo 3 aleatoriamente
+; Parametros de entrada: Variavel global random_seed
+; Parametros de saida: Atualiza enemy3_x e enemy3_y
 ; -------------------------------------------------------------------
 respawn_enemy3 proc
     call random
@@ -405,10 +390,9 @@ respawn_enemy3 proc
 respawn_enemy3 endp
     
 ; -------------------------------------------------------------------
-; Funcao: atualiza_tempo_hud
-; Descricao: Redesenha o valor do tempo na HUD
-; Parametros de entrada: Nenhum
-; Parametros de saida: Nenhum
+; Funcao: Atualiza o texto do tempo restante na HUD
+; Parametros de entrada: Variavel global campo4 (string do tempo)
+; Parametros de saida: Escreve na memoria de video (INT 10h/13h)
 ; -------------------------------------------------------------------
 atualiza_tempo_hud proc
     push ax
@@ -436,10 +420,9 @@ atualiza_tempo_hud proc
 atualiza_tempo_hud endp
 
 ; -------------------------------------------------------------------
-; Funcao: random
-; Descricao: Gera numero pseudo-aleatorio usando Linear Congruential Generator
-; Parametros de entrada: Nenhum (usa random_seed)
-; Parametros de saida: AX (numero aleatorio)
+; Funcao: Gera um numero pseudo-aleatorio
+; Parametros de entrada: Variavel global random_seed
+; Parametros de saida: Retorna numero aleatorio em AX e atualiza random_seed
 ; -------------------------------------------------------------------
 random proc
     mov ax, random_seed
@@ -451,10 +434,9 @@ random proc
 random endp
 
 ; -------------------------------------------------------------------
-; Funcao: verifica_colisao_tiro
-; Descricao: Verifica se o tiro atingiu algum inimigo e processa a logica
-; Parametros de entrada: Nenhum
-; Parametros de saida: Nenhum
+; Funcao: Verifica se o tiro atingiu algum inimigo.
+; Parametros de entrada: Variaveis tiro_x, tiro_y, enemyX_pos.
+; Parametros de saida: Remove inimigo, soma pontos ou desativa tiro.
 ; -------------------------------------------------------------------
 verifica_colisao_tiro proc
     cmp tiro_ativo, 1
@@ -596,13 +578,12 @@ verifica_colisao_tiro proc
     ret
 verifica_colisao_tiro endp
 
-; ===== PONTUA??O =====
+; ===== PONTUACAO =====
 
 ; -------------------------------------------------------------------
-; Funcao: soma_100_pontos
-; Descricao: Adiciona 100 pontos ao score
-; Parametros de entrada: Nenhum
-; Parametros de saida: Nenhum
+; Funcao: Adiciona 100 pontos ao score.
+; Parametros de entrada: Variavel global campo3.
+; Parametros de saida: Atualiza string de pontuacao.
 ; -------------------------------------------------------------------
 soma_100_pontos proc
     push bx
@@ -613,10 +594,9 @@ soma_100_pontos proc
 soma_100_pontos endp
 
 ; -------------------------------------------------------------------
-; Funcao: soma_150_pontos
-; Descricao: Adiciona 150 pontos ao score
-; Parametros de entrada: Nenhum
-; Parametros de saida: Nenhum
+; Funcao: Adiciona 150 pontos ao score.
+; Parametros de entrada: Variavel global campo3.
+; Parametros de saida: Atualiza string de pontuacao.
 ; -------------------------------------------------------------------
 soma_150_pontos proc
     push bx
@@ -628,10 +608,9 @@ soma_150_pontos proc
 soma_150_pontos endp
 
 ; -------------------------------------------------------------------
-; Funcao: atualiza_score_fase
-; Descricao: Adiciona pontos por tempo dependendo da fase atual
-; Parametros de entrada: Nenhum
-; Parametros de saida: Nenhum
+; Funcao: Adiciona pontuacao periodica baseada na fase atual.
+; Parametros de entrada: Variavel global fase_atual.
+; Parametros de saida: Incrementa pontos (10, 15 ou 20) no score.
 ; -------------------------------------------------------------------
 atualiza_score_fase proc
     push ax
@@ -680,10 +659,9 @@ atualiza_score_fase proc
 atualiza_score_fase endp
 
 ; -------------------------------------------------------------------
-; Funcao: atualiza_hud_pontuacao
-; Descricao: Redesenha o valor do score na HUD
-; Parametros de entrada: Nenhum
-; Parametros de saida: Nenhum
+; Funcao: Atualiza visualmente o score na tela.
+; Parametros de entrada: Variavel global campo3.
+; Parametros de saida: Escreve na memoria de video (INT 10h).
 ; -------------------------------------------------------------------
 atualiza_hud_pontuacao proc
     push ax
@@ -710,7 +688,9 @@ atualiza_hud_pontuacao proc
     ret
 atualiza_hud_pontuacao endp
 
-; === MATEM?TICA SCORE ===
+; === MATEMATICA SCORE ===
+; (Funcoes auxiliares de soma e carry para string de score)
+
 adiciona_unidade_5:
     mov bx, 4           
     add byte ptr [campo3 + bx], 5

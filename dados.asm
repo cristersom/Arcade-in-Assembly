@@ -15,12 +15,15 @@
     
     ; ============= MENU =============
     ; Titulo do jogo
-    msg      db "                            __   __   " , CR, NL
-             db "    ___ ___________ ___ _  / /  / /__ " , CR, NL
-             db "   (_-</ __/ __/ _ `/  ' \/ _ \/ / -_)", CR, NL
-             db "  /___/\__/_/  \_,_/_/_/_.__/_/\__/   " 
-
-    TAM_MSG equ $-msg 
+            
+    msg      db "     ____                   __   __   " , CR, NL
+             db "    / __/__________ ___ _  / /  / /__ " , CR, NL
+             db "   _\ \/ __/ __/ _ `/  ' \/ _ \/ / -_)" , CR, NL
+             db "  /___/\__/_/  \_,_/_/_/_/_.__/_/\__/ " 
+                                               
+            
+            
+             TAM_MSG equ $-msg 
     
     ; Autores do jogo
     nomes    db 'Cristersom Simionato e Wellinton Sartori', CR, NL

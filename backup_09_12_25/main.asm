@@ -86,24 +86,14 @@ MainLoop:
     call fase_inicio       ; Vai para a fase 3
     jmp MainLoop           ; Quando finalizar a fase 3, volta para o menu
 
-; -------------------------------------------------------------------
-; Funcao: IniciarVideo
-; Descricao: Define o modo de video VGA 320x200 (Mode 13h)
-; Parametros de entrada: Nenhum
-; Parametros de saida: Nenhum
-; -------------------------------------------------------------------
+; Rotinha para iniciar o modo video
 IniciarVideo proc
     mov ax, 0013h
     int 10h
     ret
 IniciarVideo endp
 
-; -------------------------------------------------------------------
-; Funcao: FinalizarVideo
-; Descricao: Retorna para o modo texto padrao (Mode 03h)
-; Parametros de entrada: Nenhum
-; Parametros de saida: Nenhum
-; -------------------------------------------------------------------
+; Rotina para finalizar o modo video (termina o jogo) 
 FinalizarVideo proc
     mov ax, 0003h
     int 10h

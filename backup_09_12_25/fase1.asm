@@ -1,12 +1,7 @@
 ; fase1.asm
 .code
 
-; -------------------------------------------------------------------
-; Funcao: fase1
-; Descricao: Loop principal de execucao do jogo (processa entrada e desenha)
-; Parametros de entrada: Nenhum
-; Parametros de saida: Nenhum
-; -------------------------------------------------------------------
+; fase1_inicio: executa o loop principal do jogo
 fase1 proc
     ; ====== CONTINUA JOGO ======
     mov tempo_restante, 60
@@ -50,12 +45,6 @@ JOGO_LOOP:
     call sprite_coluna
     jmp .skip
  
-; -------------------------------------------------------------------
-; Funcao: sprite_coluna
-; Descricao: Wrapper para desenha_coluna usando sprite vazio
-; Parametros de entrada: AX=Y, DX=X
-; Parametros de saida: Nenhum
-; -------------------------------------------------------------------
 sprite_coluna proc
     call calcula_posicao
     mov bx, OFFSET sprite_coluna_vazia
@@ -63,12 +52,6 @@ sprite_coluna proc
     ret
 sprite_coluna endp
 
-; -------------------------------------------------------------------
-; Funcao: sprite_linha
-; Descricao: Wrapper para desenha_linha usando sprite vazio
-; Parametros de entrada: AX=Y, DX=X
-; Parametros de saida: Nenhum
-; -------------------------------------------------------------------
 sprite_linha proc
     call calcula_posicao
     mov bx, OFFSET sprite_linha_vazia
@@ -352,13 +335,6 @@ jmp JOGO_LOOP
     jmp vencedor
 
 ; === ROTINAS DE RESPAWN ===
-
-; -------------------------------------------------------------------
-; Funcao: respawn_enemy1
-; Descricao: Define nova posicao aleatoria para o inimigo 1
-; Parametros de entrada: Nenhum
-; Parametros de saida: Nenhum (atualiza enemy1_x e enemy1_y)
-; -------------------------------------------------------------------
 respawn_enemy1 proc
     call random
     xor dx, dx
@@ -370,12 +346,6 @@ respawn_enemy1 proc
     ret
 respawn_enemy1 endp
 
-; -------------------------------------------------------------------
-; Funcao: respawn_enemy2
-; Descricao: Define nova posicao aleatoria para o inimigo 2
-; Parametros de entrada: Nenhum
-; Parametros de saida: Nenhum (atualiza enemy2_x e enemy2_y)
-; -------------------------------------------------------------------
 respawn_enemy2 proc
     call random
     xor dx, dx
@@ -387,12 +357,6 @@ respawn_enemy2 proc
     ret
 respawn_enemy2 endp
 
-; -------------------------------------------------------------------
-; Funcao: respawn_enemy3
-; Descricao: Define nova posicao aleatoria para o inimigo 3
-; Parametros de entrada: Nenhum
-; Parametros de saida: Nenhum (atualiza enemy3_x e enemy3_y)
-; -------------------------------------------------------------------
 respawn_enemy3 proc
     call random
     xor dx, dx
@@ -404,12 +368,6 @@ respawn_enemy3 proc
     ret
 respawn_enemy3 endp
     
-; -------------------------------------------------------------------
-; Funcao: atualiza_tempo_hud
-; Descricao: Redesenha o valor do tempo na HUD
-; Parametros de entrada: Nenhum
-; Parametros de saida: Nenhum
-; -------------------------------------------------------------------
 atualiza_tempo_hud proc
     push ax
     push bp
@@ -435,12 +393,6 @@ atualiza_tempo_hud proc
     ret
 atualiza_tempo_hud endp
 
-; -------------------------------------------------------------------
-; Funcao: random
-; Descricao: Gera numero pseudo-aleatorio usando Linear Congruential Generator
-; Parametros de entrada: Nenhum (usa random_seed)
-; Parametros de saida: AX (numero aleatorio)
-; -------------------------------------------------------------------
 random proc
     mov ax, random_seed
     mov dx, 25173
@@ -450,12 +402,7 @@ random proc
     ret
 random endp
 
-; -------------------------------------------------------------------
-; Funcao: verifica_colisao_tiro
-; Descricao: Verifica se o tiro atingiu algum inimigo e processa a logica
-; Parametros de entrada: Nenhum
-; Parametros de saida: Nenhum
-; -------------------------------------------------------------------
+; ===== VERIFICA COLIS?O DO TIRO COM REGRAS POR FASE =====
 verifica_colisao_tiro proc
     cmp tiro_ativo, 1
     je .inicio_checa_colisao 
@@ -597,13 +544,6 @@ verifica_colisao_tiro proc
 verifica_colisao_tiro endp
 
 ; ===== PONTUA??O =====
-
-; -------------------------------------------------------------------
-; Funcao: soma_100_pontos
-; Descricao: Adiciona 100 pontos ao score
-; Parametros de entrada: Nenhum
-; Parametros de saida: Nenhum
-; -------------------------------------------------------------------
 soma_100_pontos proc
     push bx
     call adiciona_centena_1
@@ -612,12 +552,6 @@ soma_100_pontos proc
     ret
 soma_100_pontos endp
 
-; -------------------------------------------------------------------
-; Funcao: soma_150_pontos
-; Descricao: Adiciona 150 pontos ao score
-; Parametros de entrada: Nenhum
-; Parametros de saida: Nenhum
-; -------------------------------------------------------------------
 soma_150_pontos proc
     push bx
     call adiciona_centena_1 ; +100
@@ -627,12 +561,6 @@ soma_150_pontos proc
     ret
 soma_150_pontos endp
 
-; -------------------------------------------------------------------
-; Funcao: atualiza_score_fase
-; Descricao: Adiciona pontos por tempo dependendo da fase atual
-; Parametros de entrada: Nenhum
-; Parametros de saida: Nenhum
-; -------------------------------------------------------------------
 atualiza_score_fase proc
     push ax
     push bx
@@ -679,12 +607,6 @@ atualiza_score_fase proc
     ret
 atualiza_score_fase endp
 
-; -------------------------------------------------------------------
-; Funcao: atualiza_hud_pontuacao
-; Descricao: Redesenha o valor do score na HUD
-; Parametros de entrada: Nenhum
-; Parametros de saida: Nenhum
-; -------------------------------------------------------------------
 atualiza_hud_pontuacao proc
     push ax
     push bx

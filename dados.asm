@@ -22,7 +22,6 @@
              db "  /___/\__/_/  \_,_/_/_/_/_.__/_/\__/ " 
                                                
             
-            
              TAM_MSG equ $-msg 
     
     ; Autores do jogo

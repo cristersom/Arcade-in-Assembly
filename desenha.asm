@@ -1,6 +1,9 @@
 ;desenha.asm
 .code
-;Converte coordenadas
+
+; Converte coordenadas com o calculo Y*320+X
+; AX = Y
+; DX = X
 calcula_posicao proc
     push dx
     push cx
@@ -9,7 +12,7 @@ calcula_posicao proc
     pop cx
     pop dx
     add ax, dx
-    mov di, ax
+    mov di, ax      ; DI recebe o resultado
     ret
 calcula_posicao endp
 
@@ -22,21 +25,21 @@ desenha_13x29 proc
     push di
     push es
 
-    mov AX, 0A000h
-    mov ES, AX
-    mov DX, 13
-laco_13x29:
-    mov CX, 29
-LACO_13x29:
-    mov AL, [BX]
-    stosb
-    inc BX
-    loop LACO_13x29
+    mov AX, 0A000h  ; Pega o segmento de video
+    mov ES, AX      ; Coloca o segmento de video em ES para desenhar pixels na tela 
+    mov DX, 13      ; N?mero de linhas
+laco_13x29:         ; Loop para controlar as linhas
+    mov CX, 29      ; Numero de colunas
+LACO_13x29:         ; Loop para controlar as colunas
+    mov AL, [BX]    ; Pega a cor do pixel da sprite
+    stosb           ; Pinta o pixel correspondente na tela
+    inc BX          ; Vai para proximo dado da sprite
+    loop LACO_13x29 ; Repete at? acabar de pintar a linha 
     mov ax, 320
     sub ax, 29
-    add DI, ax
-    dec DX
-    jnz laco_13x29
+    add DI, ax      ; Vai para a proxima linha na coluna inicial 
+    dec DX          ; Decrementa a linha
+    jnz laco_13x29  ; Repete ate acabar o numero de linhas
 
     pop es
     pop di
@@ -47,7 +50,8 @@ LACO_13x29:
     ret
 desenha_13x29 endp
 
-;Desenha vida
+; Desenha vida 7x19 (segue a mesma logica da proc anterior mas agora com menos linhas e colunas)
+; Usada para desenhar as vidas do jogador na HUD
 desenha_vida proc
     push ax
     push bx
@@ -81,7 +85,8 @@ LACO_7x19:
     ret
 desenha_vida endp
 
-; Desenha coluna
+; Desenha coluna (segue a mesma logica das anteriores, mas desta vez desenha somente uma coluna)
+; Usada para apagar os rastros da direita e esquerda das naves
 desenha_coluna proc
     push ax
     push bx
@@ -116,7 +121,8 @@ LACO_13x1:
     ret
 desenha_coluna endp
 
-; Desenha linha
+; Desenha linha (segue a mesma logica das anteriores, mas desta vez desenha somente uma linha)
+; Usada para apagar os rastros de cima e de baixo das naves
 desenha_linha proc
     push ax
     push bx
@@ -151,7 +157,7 @@ LACO_1x29:
     ret
 desenha_linha endp
 
-; Desenha pixel
+; Desenha um pixel que sera usado como tiro da nave seguindo a mesma logica anterior
 desenha_pixel proc
     push di
     push es
@@ -176,6 +182,7 @@ desenha_pixel proc
     ret
 desenha_pixel endp
 
+; Responsavel por desenhar a superficie das fases 1 e 2, segue a mesma logica de desenhar sprites, mas tem scroll
 desenha_superficie_fase proc
     push ax
     push bx
@@ -195,64 +202,75 @@ desenha_superficie_fase proc
     mov dx, 0
     call calcula_posicao
 
+    ; Preenche a parte do solo com pixels estaticos no qual nao participaram do scroll perdendo menos fps 
     mov cx, 21000
-    cmp fase_atual, 2
+    cmp fase_atual, 2                  ; Seleciona a cor no qual sera preenchido conforme a fase atual
     je .mudar_cor_superficie
-    mov al, 1
+    mov al, 1                          ; Cor da fasae 1 (azul) 
+    
 .continuar_mudar_cor_superficie:
     rep stosb
     
-    cmp fase_atual, 2
+    cmp fase_atual, 2                  ; Seleciona qual sprite ira formar a superficie 
     je .mudar_superficie
 
-    mov si, OFFSET superficie_fase1
+    mov si, OFFSET superficie_fase1    ; Superficie da fase 1
+
 .continua_mudar_superficie:
     mov ax, 0A000h
     mov es, ax
 
-    mov ax, 119
+    mov ax, 119                        ; Comeca a desenhar a superficie em y = 119
     mov dx, 0
     call calcula_posicao
-
-    mov bx, 490
-    mov cx, 20
-    mov ax, desloc_superficie
+    
+    ; Dados da sprite do solo
+    mov bx, 490                        ; 490 colunas 
+    mov cx, 20                         ; 20 linhas
+    mov ax, desloc_superficie          
     mov bp, ax
 
 linha_loop:
-    push cx
-    push si
-    push di
-    mov cx, 320
-    mov dx, bp
-    mov ax, dx
-    add si, ax
+    push cx                            ; Salva o contador de linhas
+    push si                            ; Salva ponteiro da sprite
+    push di                            ; Salva ponteiro da mem?ria de v?deo
+    
+    mov cx, 320                        ; N?mero de colunas (largura da tela)
+    mov dx, bp                         ; DX recebe o deslocamento horizontal inicial
+    mov ax, dx                         ; Copia deslocamento para AX
+    add si, ax                         ; Aplica deslocamento inicial na sprite
+    
 coluna_loop:
-    lodsb
-    stosb
-    inc dx
-    cmp dx, bx
-    jb skip_reset
-    sub dx, bx
-    sub si, bx
-skip_reset:
-    loop coluna_loop
+    lodsb                              ; L? um byte da imagem (DS:SI) e incrementa SI
+    stosb                              ; Escreve o byte na tela (ES:DI) e incrementa DI
+    
+    inc dx                             ; Avan?a posi??o na largura da superf?cie
+    cmp dx, bx                         ; Verifica se ultrapassou a largura total da imagem
+    jb skip_reset                      ; Se ainda estiver dentro da largura, continua
+    sub dx, bx                         ; Reseta posi??o horizontal (volta ao in?cio)
+    sub si, bx                         ; Corrige SI para in?cio da linha da imagem
+    
+skip_reset:                 
+    
+    loop coluna_loop                   ; Repete para todas as 320 colunas da linha
+    pop di                             ; Restaura ponteiro de v?deo
+    add di, 320                        ; Avan?a para a pr?xima linha da tela
 
-    pop di
-    add di, 320
-    pop si
-    add si, 490
-    pop cx
-    loop linha_loop
+    pop si                             ; Restaura ponteiro da sprite
+    add si, 490                        ; Avan?a para a pr?xima linha da sprite de superf?cie
 
-    mov ax, desloc_superficie
-    inc ax
-    cmp ax, 490
-    jb ok_scroll
-    xor ax, ax
+    pop cx                             ; Restaura contador de linhas
+    loop linha_loop                    ; Repete para todas as linhas da tela
+
+    mov ax, desloc_superficie          ; Carrega deslocamento horizontal do cen?rio
+    inc ax                             ; Incrementa para gerar efeito de scroll
+    cmp ax, 490                        ; Verifica se atingiu o final da superf?cie
+    jb ok_scroll                       ; Se ainda n?o chegou ao fim, mant?m valor
+    xor ax, ax                         ; Se chegou ao fim, volta para zero
 ok_scroll:
-    mov desloc_superficie, ax
-
+    
+    mov desloc_superficie, ax          ; Atualiza o deslocamento do cen?rio
+    
     pop es
     pop ds
     pop di
@@ -264,32 +282,35 @@ ok_scroll:
     ret
 desenha_superficie_fase endp
 
+; Muda a superficie para a fase 2
 .mudar_superficie:
     mov si, OFFSET superficie_fase2 
     jmp .continua_mudar_superficie
+    
+; Muda a cor da superficie 2
 .mudar_cor_superficie:
-    mov al, 6
+    mov al, 6                           ; Cor marrom
     jmp .continuar_mudar_cor_superficie
 
-; Carrega HUD (ATUALIZADO PARA 5 DIGITOS)
+; Carrega HUD do jogo
 carrega_hud proc
 
     mov ax, @data 
     mov ds, ax  
     mov Es, ax   
 
-    ; Texto SCORE:
+    ; Texto "SCORE:"
     mov bp,OFFSET campo1
     mov ah,13h
     mov al,0h
     xor bh,bh
     mov bl,15
     mov cx,TAM_MSG3
-    mov dh,0
-    mov dl,0
+    mov dh,0                            ; Y = 0
+    mov dl,0                            ; X = 0
     int 10h
 
-    ; Texto TEMPO:
+    ; Texto "TEMPO:"
     mov bp,OFFSET campo2
     mov ah,13h
     mov al,0h
@@ -300,18 +321,18 @@ carrega_hud proc
     mov dl,32
     int 10h
 
-    ; Valor SCORE (5 Digitos)
+    ; Valor do score 
     mov bp,OFFSET campo3
     mov ah,13h
     mov al,0h
     xor bh,bh
     mov bl,2
-    mov cx,5  ; AGORA 5
+    mov cx,5  ; 5 digitos
     mov dh,0
-    mov dl,6  ; Ajustado
+    mov dl,6 
     int 10h
 
-    ; Valor TEMPO
+    ; Valor do tempo
     mov bp,OFFSET campo4
     mov ah,13h
     mov al,0h
@@ -319,15 +340,15 @@ carrega_hud proc
     mov bl,2
     mov cx,2
     mov dh,0
-    mov dl,38 ; Ajustado para o fim da tela
+    mov dl,38
     int 10h 
     
+    ; Desenha as vidas conforme a quantidade
     cmp qtd_vidas, 2
     je .qtd2
     cmp qtd_vidas, 1
     je .qtd1
     cmp qtd_vidas, 0
-    ;jmp gameover
     
     mov ax, 0
     mov dx, 181
@@ -350,3 +371,54 @@ carrega_hud proc
     
     ret
 carrega_hud endp
+
+; Desenha o score caso o jogador ganhe a partida
+carrega_score_final proc
+
+    push ax
+    push bx
+    push cx
+    push dx
+    push si
+    push di
+    push ds
+    push es
+
+    mov ax, @data 
+    mov ds, ax  
+    mov Es, ax   
+
+    ; Texto "SCORE:"
+    mov bp,OFFSET campo1
+    mov ah,13h
+    mov al,0h
+    xor bh,bh
+    mov bl,15
+    mov cx,TAM_MSG3
+    mov dh,15
+    mov dl,14
+    int 10h
+
+    ; Valor do score
+    mov bp,OFFSET campo3
+    mov ah,13h
+    mov al,0h
+    xor bh,bh
+    mov bl,15
+    mov cx,5                   
+    mov dh,15                  
+    mov dl,20                 
+    int 10h
+    
+    pop es
+    pop ds
+    pop di
+    pop si
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    ret
+    
+carrega_score_final endp
+

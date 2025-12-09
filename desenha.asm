@@ -1,15 +1,9 @@
 ;desenha.asm
 .code
 
-; -------------------------------------------------------------------
-; Funcao: calcula_posicao
-; Descricao: Converte coordenadas (X,Y) para offset linear da memoria de video (Y*320+X)
-; Parametros de entrada: 
-;    AX - Coordenada Y
-;    DX - Coordenada X
-; Parametros de saida: 
-;    DI - Offset calculado (endereco na memoria de video)
-; -------------------------------------------------------------------
+; Funcao: Converte coordenadas (X, Y) para offset linear de memoria de video (Y*320+X)
+; Parametros de entrada: AX = Y, DX = X
+; Parametros de saida: DI = Endereco calculado
 calcula_posicao proc
     push dx
     push cx
@@ -22,15 +16,9 @@ calcula_posicao proc
     ret
 calcula_posicao endp
 
-; -------------------------------------------------------------------
-; Funcao: desenha_13x29
-; Descricao: Desenha um sprite de 13x29 pixels na tela
-; Parametros de entrada: 
-;    AX - Coordenada Y inicial
-;    DX - Coordenada X inicial
-;    BX - Offset do sprite a ser desenhado (ponteiro de dados)
+; Funcao: Desenha um sprite de tamanho 13x29 pixels na memoria de video
+; Parametros de entrada: AX = Y, DX = X, BX = Offset do sprite
 ; Parametros de saida: Nenhum
-; -------------------------------------------------------------------
 desenha_13x29 proc
     push ax
     push bx
@@ -41,14 +29,14 @@ desenha_13x29 proc
 
     mov AX, 0A000h  ; Pega o segmento de video
     mov ES, AX      ; Coloca o segmento de video em ES para desenhar pixels na tela 
-    mov DX, 13      ; Numero de linhas
+    mov DX, 13      ; N?mero de linhas
 laco_13x29:         ; Loop para controlar as linhas
     mov CX, 29      ; Numero de colunas
 LACO_13x29:         ; Loop para controlar as colunas
     mov AL, [BX]    ; Pega a cor do pixel da sprite
     stosb           ; Pinta o pixel correspondente na tela
     inc BX          ; Vai para proximo dado da sprite
-    loop LACO_13x29 ; Repete ate acabar de pintar a linha 
+    loop LACO_13x29 ; Repete at? acabar de pintar a linha 
     mov ax, 320
     sub ax, 29
     add DI, ax      ; Vai para a proxima linha na coluna inicial 
@@ -64,15 +52,9 @@ LACO_13x29:         ; Loop para controlar as colunas
     ret
 desenha_13x29 endp
 
-; -------------------------------------------------------------------
-; Funcao: desenha_vida
-; Descricao: Desenha o icone de vida (nave pequena) de 7x19 pixels na HUD
-; Parametros de entrada: 
-;    AX - Coordenada Y
-;    DX - Coordenada X
-;    BX - Offset do sprite de vida
+; Funcao: Desenha o icone de vida na HUD (7x19 pixels)
+; Parametros de entrada: AX = Y, DX = X, BX = Offset do sprite
 ; Parametros de saida: Nenhum
-; -------------------------------------------------------------------
 desenha_vida proc
     push ax
     push bx
@@ -106,15 +88,9 @@ LACO_7x19:
     ret
 desenha_vida endp
 
-; -------------------------------------------------------------------
-; Funcao: desenha_coluna
-; Descricao: Desenha uma coluna vertical (usada para limpar rastro lateral)
-; Parametros de entrada: 
-;    AX - Coordenada Y
-;    DX - Coordenada X
-;    BX - Offset do sprite (geralmente vazio/preto)
+; Funcao: Desenha uma coluna vertical (usado para limpar rastro lateral)
+; Parametros de entrada: AX = Y, DX = X, BX = Offset da cor/sprite
 ; Parametros de saida: Nenhum
-; -------------------------------------------------------------------
 desenha_coluna proc
     push ax
     push bx
@@ -149,15 +125,9 @@ LACO_13x1:
     ret
 desenha_coluna endp
 
-; -------------------------------------------------------------------
-; Funcao: desenha_linha
-; Descricao: Desenha uma linha horizontal (usada para limpar rastro vertical)
-; Parametros de entrada: 
-;    AX - Coordenada Y
-;    DX - Coordenada X
-;    BX - Offset do sprite (geralmente vazio/preto)
+; Funcao: Desenha uma linha horizontal (usado para limpar rastro vertical)
+; Parametros de entrada: AX = Y, DX = X, BX = Offset da cor/sprite
 ; Parametros de saida: Nenhum
-; -------------------------------------------------------------------
 desenha_linha proc
     push ax
     push bx
@@ -192,15 +162,9 @@ LACO_1x29:
     ret
 desenha_linha endp
 
-; -------------------------------------------------------------------
-; Funcao: desenha_pixel
-; Descricao: Pinta um unico pixel na tela (usado para o tiro)
-; Parametros de entrada: 
-;    AX - Coordenada Y
-;    DX - Coordenada X
-;    CL - Cor do pixel (byte)
+; Funcao: Desenha um pixel unico na tela (usado para o tiro)
+; Parametros de entrada: AX = Y, DX = X, CL = Cor do pixel
 ; Parametros de saida: Nenhum
-; -------------------------------------------------------------------
 desenha_pixel proc
     push di
     push es
@@ -225,12 +189,9 @@ desenha_pixel proc
     ret
 desenha_pixel endp
 
-; -------------------------------------------------------------------
-; Funcao: desenha_superficie_fase
-; Descricao: Desenha o terreno da fase atual com efeito de scroll (rolagem)
-; Parametros de entrada: Nenhum (usa variaveis globais fase_atual e desloc_superficie)
-; Parametros de saida: Nenhum
-; -------------------------------------------------------------------
+; Funcao: Renderiza a superficie e controla o efeito de scroll horizontal
+; Parametros de entrada: Variaveis globais 'fase_atual' e 'desloc_superficie'
+; Parametros de saida: Atualiza 'desloc_superficie'
 desenha_superficie_fase proc
     push ax
     push bx
@@ -281,43 +242,43 @@ desenha_superficie_fase proc
 linha_loop:
     push cx                            ; Salva o contador de linhas
     push si                            ; Salva ponteiro da sprite
-    push di                            ; Salva ponteiro da memoria de video
+    push di                            ; Salva ponteiro da mem?ria de v?deo
     
-    mov cx, 320                        ; Numero de colunas (largura da tela)
+    mov cx, 320                        ; N?mero de colunas (largura da tela)
     mov dx, bp                         ; DX recebe o deslocamento horizontal inicial
     mov ax, dx                         ; Copia deslocamento para AX
     add si, ax                         ; Aplica deslocamento inicial na sprite
     
 coluna_loop:
-    lodsb                              ; Le um byte da imagem (DS:SI) e incrementa SI
+    lodsb                              ; L? um byte da imagem (DS:SI) e incrementa SI
     stosb                              ; Escreve o byte na tela (ES:DI) e incrementa DI
     
-    inc dx                             ; Avanca posicao na largura da superficie
+    inc dx                             ; Avan?a posi??o na largura da superf?cie
     cmp dx, bx                         ; Verifica se ultrapassou a largura total da imagem
     jb skip_reset                      ; Se ainda estiver dentro da largura, continua
-    sub dx, bx                         ; Reseta posicao horizontal (volta ao inicio)
-    sub si, bx                         ; Corrige SI para inicio da linha da imagem
+    sub dx, bx                         ; Reseta posi??o horizontal (volta ao in?cio)
+    sub si, bx                         ; Corrige SI para in?cio da linha da imagem
     
 skip_reset:                 
     
     loop coluna_loop                   ; Repete para todas as 320 colunas da linha
-    pop di                             ; Restaura ponteiro de video
-    add di, 320                        ; Avanca para a proxima linha da tela
+    pop di                             ; Restaura ponteiro de v?deo
+    add di, 320                        ; Avan?a para a pr?xima linha da tela
 
     pop si                             ; Restaura ponteiro da sprite
-    add si, 490                        ; Avanca para a proxima linha da sprite de superficie
+    add si, 490                        ; Avan?a para a pr?xima linha da sprite de superf?cie
 
     pop cx                             ; Restaura contador de linhas
     loop linha_loop                    ; Repete para todas as linhas da tela
 
-    mov ax, desloc_superficie          ; Carrega deslocamento horizontal do cenario
+    mov ax, desloc_superficie          ; Carrega deslocamento horizontal do cen?rio
     inc ax                             ; Incrementa para gerar efeito de scroll
-    cmp ax, 490                        ; Verifica se atingiu o final da superficie
-    jb ok_scroll                       ; Se ainda nao chegou ao fim, mantem valor
+    cmp ax, 490                        ; Verifica se atingiu o final da superf?cie
+    jb ok_scroll                       ; Se ainda n?o chegou ao fim, mant?m valor
     xor ax, ax                         ; Se chegou ao fim, volta para zero
 ok_scroll:
     
-    mov desloc_superficie, ax          ; Atualiza o deslocamento do cenario
+    mov desloc_superficie, ax          ; Atualiza o deslocamento do cen?rio
     
     pop es
     pop ds
@@ -340,12 +301,9 @@ desenha_superficie_fase endp
     mov al, 6                           ; Cor marrom
     jmp .continuar_mudar_cor_superficie
 
-; -------------------------------------------------------------------
-; Funcao: carrega_hud
-; Descricao: Desenha os textos e valores iniciais da HUD (Score, Tempo, Vidas)
-; Parametros de entrada: Nenhum (Usa strings definidas em .data)
+; Funcao: Inicializa e desenha a HUD (Score, Vidas, Tempo)
+; Parametros de entrada: Variaveis 'campo1'...'campo4', 'qtd_vidas'
 ; Parametros de saida: Nenhum
-; -------------------------------------------------------------------
 carrega_hud proc
 
     mov ax, @data 
@@ -425,12 +383,9 @@ carrega_hud proc
     ret
 carrega_hud endp
 
-; -------------------------------------------------------------------
-; Funcao: carrega_score_final
-; Descricao: Exibe o score final na tela de vitoria/derrota
-; Parametros de entrada: Nenhum
+; Funcao: Exibe a pontuacao final na tela de vitoria
+; Parametros de entrada: Variavel 'campo3' (score)
 ; Parametros de saida: Nenhum
-; -------------------------------------------------------------------
 carrega_score_final proc
 
     push ax

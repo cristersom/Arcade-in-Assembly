@@ -3,12 +3,9 @@
 
 ;-------------------MENU-------------------
 
-; -------------------------------------------------------------------
-; Funcao: atualiza_menu
-; Descricao: Redesenha as opcoes do menu destacando a opcao selecionada
-; Parametros de entrada: Nenhum (usa variavel global menu_selecionado)
-; Parametros de saida: Nenhum
-; -------------------------------------------------------------------
+; Funcao: Atualiza o seletor visual do menu (seta ou destaque)
+; Parametros de entrada: Variavel global 'menu_selecionado'
+; Parametros de saida: Nenhum (atualiza video diretamente)
 atualiza_menu proc
 
     cmp menu_selecionado, 0        ; Compara para saber qual esta selecionado
@@ -60,12 +57,9 @@ atualiza_menu proc
     ret
 atualiza_menu endp
 
-; -------------------------------------------------------------------
-; Funcao: menu_principal
-; Descricao: Gerencia a logica do menu (animacao de fundo e leitura de teclas)
+; Funcao: Gerencia a logica do menu principal (input e renderizacao)
 ; Parametros de entrada: Nenhum
-; Parametros de saida: AL (1 = Jogar, 0 = Sair)
-; -------------------------------------------------------------------
+; Parametros de saida: Retorna AL = 1 (Jogar) ou AL = 0 (Sair)
 menu_principal proc
     push bx
     push cx
@@ -255,12 +249,9 @@ menu_principal endp
 
 ;----------FASES----------
 
-; -------------------------------------------------------------------
-; Funcao: fase_inicio
-; Descricao: Exibe a tela de apresentacao da fase, game over ou vitoria
-; Parametros de entrada: Nenhum (usa variaveis globais fase_atual, player_morto, etc.)
+; Funcao: Prepara e exibe a tela de transicao de fase, game over ou vitoria
+; Parametros de entrada: Variaveis globais 'fase_atual', 'player_morto', 'player_venceu'
 ; Parametros de saida: Nenhum
-; -------------------------------------------------------------------
 fase_inicio proc
     push ax
     push bx

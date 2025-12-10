@@ -7,10 +7,10 @@
 ; Parametros de saida: Gerencia todo o fluxo do jogo, movimentacao e desenho.
 ; -------------------------------------------------------------------
 fase1 proc
-    ; ====== CONTINUA JOGO ======
-    mov tempo_restante, 60
-    call carrega_hud
-    call desenha_superficie_fase
+
+    mov tempo_restante, 60               ; Reseta o tempo das fases
+    call carrega_hud                     ; Carrega a HUD
+    call desenha_superficie_fase         ; Desenha o solo da fase atual
 
     ; Desenha o jogador na posicao inicial
     mov ax, player_y
@@ -18,13 +18,14 @@ fase1 proc
     call calcula_posicao
     mov bx, OFFSET nave_cacador
     call desenha_13x29
-
+    
+; Responsavel por tudo que vai acontecer em loop dentro do jogo
 JOGO_LOOP:
     
-    call verifica_colisao_player
-    call desenha_superficie_fase
+    call verifica_colisao_player         ; Verifica se aconteceu alguma colisao
+    call desenha_superficie_fase         ; Fica scrollando a superficie 
     
-    ; 1a. Apaga Inimigos
+    ; Apaga Inimigos da posicao anterior
     mov ax, enemy1_y
     mov dx, enemy1_x
     cmp dx, 0
@@ -49,7 +50,7 @@ JOGO_LOOP:
     call sprite_coluna
     jmp .skip
  
-; Rotinas internas de limpeza de sprite
+    ; Rotinas internas de limpeza nos rastros das sprites
 sprite_coluna proc
     call calcula_posicao
     mov bx, OFFSET sprite_coluna_vazia
@@ -73,28 +74,33 @@ sprite_linha endp
     cmp enemy2_x, 0
     je .enemy3
 .skip:
-    ; 1b. Apaga o Tiro
+    
+    ; Apaga o tiro
     cmp tiro_ativo, 1
     jne .tiro_erase_skip
     mov ax, tiro_y
     mov dx, tiro_x
     mov cl, 0 
     call desenha_pixel
+    
 .tiro_erase_skip:
 
-    ; 2. Le o teclado
+    ; Le o teclado
     mov ah, 01h
     int 16h
     jnz .processa_teclado
     jmp .continua_loop
 
+; Checa qual tecla o player pressionou     
 .processa_teclado:
     mov ah, 00h
     int 16h
-
+    
+    ; Garante que nao tem outro disparo na tela
     cmp al, 0
     jne .checar_tecla_disparo
-
+    
+    ; Compara para saber se a tecla pressionada é uma de movimento
     cmp ah, 48H
     je .move_cima
     cmp ah, 50H
@@ -104,7 +110,8 @@ sprite_linha endp
     cmp ah, 4DH
     je .move_direita
     jmp .continua_loop
-
+    
+; Checa se o player pressionou a tecla de disparo  
 .checar_tecla_disparo:
     cmp al, ' '
     jne .continua_loop
@@ -119,6 +126,7 @@ sprite_linha endp
     mov tiro_x, ax
     jmp .continua_loop
 
+; Executa os movimentos    
 .move_cima:
     mov ax, player_y
     cmp ax, MIN_Y
@@ -150,29 +158,22 @@ sprite_linha endp
 
 .continua_loop:
 
-    ; === VERIFICA COLISAO DO TIRO (ATUALIZADO) ===
+    ; Verifica colisao do tiro
     call verifica_colisao_tiro
-    ; =============================================
 
-;=========================
-; enemy 1
-;=========================
+    ; Quando os inimos chegarem em -29 eles sao spawnados novamente 
     dec enemy1_x
     cmp enemy1_x, -29
     jg skip_enemy1
     call respawn_enemy1
+    
 skip_enemy1:
-;=========================
-; enemy 2
-;=========================
     dec enemy2_x
     cmp enemy2_x, -29
     jg skip_enemy2
     call respawn_enemy2
+    
 skip_enemy2:
-;=========================
-; enemy 3
-;=========================
     dec enemy3_x
     cmp enemy3_x, -29
     jg skip_enemy3
@@ -181,16 +182,18 @@ skip_enemy3:
 
 .enemy_reset_skip:
 
-    ; 2c. Atualiza Timer
+    ; Atualiza o timer conforme a fase
     dec timer_counter
     cmp timer_counter, 0
     jne .pula_timer_update
 
+    ; Considera que 38 execuções equivalem a 1 unidade de tempo
     mov timer_counter, 38
     
     ; Chama pontuacao por tempo
     call atualiza_score_fase
 
+    ; Mostra o valor do timer atualizado
     mov al, tempo_restante
     cmp al, 0
     je .pula_timer_update
@@ -206,24 +209,26 @@ skip_enemy3:
     call atualiza_tempo_hud
 .pula_timer_update:
     
-    ; 2d. Atualiza Tiro
+    ; Atualiza Tiro
     cmp tiro_ativo, 1
     jne .tiro_update_skip
     add tiro_x, 2
 
+    ; Verifica se o tiro chegou ao limite da tela
     cmp tiro_x, 319
     jle .tiro_update_skip
     mov tiro_ativo, 0
 .tiro_update_skip:
 
-    ; 3. Desenha o jogador
+    ; Desenha o jogador
     mov ax, player_y
     mov dx, player_x
     call calcula_posicao
     mov bx, OFFSET nave_cacador
     call desenha_13x29
     
-     mov ax, player_y
+    ; Verifica qual tipo de rastro o movimento do jogador vai deixar
+    mov ax, player_y
     mov dx, player_x
     cmp rastro, 0
     je .rastro0
@@ -232,25 +237,31 @@ skip_enemy3:
     cmp rastro, 2
     je .rastro2
     call sprite_linha
-
+    
+; Apaga a coluna da esquerda 
 .rastro0:
     dec dx
     call sprite_coluna
     jmp .continua_rastro
+    
+; Apga a linha do rastro de baixo da nave    
 .rastro1:
     add ax,13
     call sprite_linha
     jmp .continua_rastro
+; Apaga a linha de cima da nave
 .rastro2: 
     dec ax
     call sprite_linha
     jmp .continua_rastro
     
 .continua_rastro:
-    ;muda os inimigos da fase
+    ; Muda os inimigos da fase
     cmp fase_atual, 2
     jne .nao_mudar_inimigo     
     jmp .mudar_inimigo 
+    
+; Fase 1 e 3 não muda o inimigo    
 .nao_mudar_inimigo:
     mov si, offset nave1
     mov di, offset nave_atual
@@ -258,7 +269,7 @@ skip_enemy3:
     jmp .repete_mudar
 .continuar_mudar_inimigo:
 
-    ; 3a. Desenha Inimigos
+    ; Desenha os inimigos
     mov ax, enemy1_x
     cmp ax, 0
     jl .enemy1_draw_skip
@@ -295,7 +306,7 @@ skip_enemy3:
     call desenha_13x29
 .enemy3_draw_skip:
 
-    ; 3b. Desenha o Tiro
+    ; Desenha o tiro
     cmp tiro_ativo, 1
     jne .tiro_draw_skip
     mov ax, tiro_y
@@ -303,22 +314,27 @@ skip_enemy3:
     mov cl, 0Fh 
     call desenha_pixel
 .tiro_draw_skip:
-
+    
+    ; Seleciona a velocidade da fase
     mov ah, 86h
     mov cx, game_delay_cx
     mov dx, game_delay_dx
     int 15h
 
+    ; Verifica se o tempo acabou
     mov al, tempo_restante
     cmp al, 0
     je .fim_de_jogo_timer
 
 jmp JOGO_LOOP
 
+; Reescreve a sprite inteira da nave da fase para a sprite da nave atual
 .mudar_inimigo:  
     mov si, offset nave2
     mov di, offset nave_atual
     mov cx, TAM_SPRITE
+    
+; Fica em loop ate escrever toda sprite    
 .repete_mudar:
     mov al, [si]
     mov [di], al
@@ -327,6 +343,7 @@ jmp JOGO_LOOP
     loop .repete_mudar
     jmp .continuar_mudar_inimigo
    
+; Direciona para a proxima fase    
 .fim_de_jogo_timer:
     cmp fase_atual, 2
     je .vai_fase3
@@ -432,151 +449,6 @@ random proc
     mov random_seed, ax
     ret
 random endp
-
-; -------------------------------------------------------------------
-; Funcao: Verifica se o tiro atingiu algum inimigo.
-; Parametros de entrada: Variaveis tiro_x, tiro_y, enemyX_pos.
-; Parametros de saida: Remove inimigo, soma pontos ou desativa tiro.
-; -------------------------------------------------------------------
-verifica_colisao_tiro proc
-    cmp tiro_ativo, 1
-    je .inicio_checa_colisao 
-    jmp .fim_colisao         
-
-.inicio_checa_colisao:
-    ; --- Inimigo 1 ---
-    mov ax, tiro_x
-    cmp ax, enemy1_x
-    jl .checa_e2
-    mov bx, enemy1_x
-    add bx, 29
-    cmp ax, bx
-    jg .checa_e2
-    mov ax, tiro_y
-    cmp ax, enemy1_y
-    jl .checa_e2
-    mov bx, enemy1_y
-    add bx, 13
-    cmp ax, bx
-    jg .checa_e2
-
-    ; HIT Inimigo 1 detectado
-    ; Verifica Fase
-    cmp fase_atual, 2
-    je .hit_fase2_e1
-    
-    mov ax, enemy1_y
-    mov dx, enemy1_x
-    call calcula_posicao
-    mov bx, OFFSET sprite_vazio
-    call desenha_13x29
-    
-    ; Fase 1 ou 3 (Destrutivel)
-    call respawn_enemy1
-    mov tiro_ativo, 0
-    cmp fase_atual, 3
-    je .pontos_fase3_e1
-    
-    ; Fase 1 (100 pontos)
-    call soma_100_pontos
-    jmp .fim_colisao
-
-    .pontos_fase3_e1:
-    call soma_150_pontos
-    jmp .fim_colisao
-
-    .hit_fase2_e1:
-    ; Fase 2 (Indestrutivel)
-    mov tiro_ativo, 0 ; Tiro some, meteoro fica
-    jmp .fim_colisao
-
-.checa_e2:
-    ; --- Inimigo 2 ---
-    mov ax, tiro_x
-    cmp ax, enemy2_x
-    jl .checa_e3
-    mov bx, enemy2_x
-    add bx, 29
-    cmp ax, bx
-    jg .checa_e3
-    mov ax, tiro_y
-    cmp ax, enemy2_y
-    jl .checa_e3
-    mov bx, enemy2_y
-    add bx, 13
-    cmp ax, bx
-    jg .checa_e3
-
-    ; HIT Inimigo 2 detectado
-    cmp fase_atual, 2
-    je .hit_fase2_e2
-    
-    mov ax, enemy2_y
-    mov dx, enemy2_x
-    call calcula_posicao
-    mov bx, OFFSET sprite_vazio
-    call desenha_13x29
-    
-    call respawn_enemy2
-    mov tiro_ativo, 0
-    cmp fase_atual, 3
-    je .pontos_fase3_e2
-    call soma_100_pontos
-    jmp .fim_colisao
-
-    .pontos_fase3_e2:
-    call soma_150_pontos
-    jmp .fim_colisao
-
-    .hit_fase2_e2:
-    mov tiro_ativo, 0
-    jmp .fim_colisao
-
-.checa_e3:
-    ; --- Inimigo 3 ---
-    mov ax, tiro_x
-    cmp ax, enemy3_x
-    jl .fim_colisao
-    mov bx, enemy3_x
-    add bx, 29
-    cmp ax, bx
-    jg .fim_colisao
-    mov ax, tiro_y
-    cmp ax, enemy3_y
-    jl .fim_colisao
-    mov bx, enemy3_y
-    add bx, 13
-    cmp ax, bx
-    jg .fim_colisao
-
-    ; HIT Inimigo 3 detectado
-    cmp fase_atual, 2
-    je .hit_fase2_e3
-    
-    mov ax, enemy3_y
-    mov dx, enemy3_x
-    call calcula_posicao
-    mov bx, OFFSET sprite_vazio
-    call desenha_13x29
-    
-    call respawn_enemy3
-    mov tiro_ativo, 0
-    cmp fase_atual, 3
-    je .pontos_fase3_e3
-    call soma_100_pontos
-    jmp .fim_colisao
-
-    .pontos_fase3_e3:
-    call soma_150_pontos
-    jmp .fim_colisao
-
-    .hit_fase2_e3:
-    mov tiro_ativo, 0
-    jmp .fim_colisao
-
-.fim_colisao:
-    ret
-verifica_colisao_tiro endp
 
 ; ===== PONTUACAO =====
 

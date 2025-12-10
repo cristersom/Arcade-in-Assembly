@@ -84,7 +84,7 @@
     
     ; Delay do jogo
     game_delay_cx = 0
-    game_delay_dx = 3000
+    game_delay_dx dw 3000
     
     ; Representa o padrao de spawn que a fase tera
     random_seed dw 32141

@@ -72,8 +72,8 @@
     TAM_MSG4 equ $-campo2 
     
     ; Variaveis para o tempo
-    tempo_restante  db 5
-    timer_counter   db 67 
+    tempo_restante  db 60        ; Tempo das fases
+    timer_counter   db 38        ; Quantidade de iteracoes para contar 1 unidade de tempo
     
     ; Variavel que informa a quantidade de vidas atual do jogador
     qtd_vidas db 3

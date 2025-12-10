@@ -29,6 +29,8 @@ MainLoop:
     mov player_venceu, 0
     mov qtd_vidas, 3
     mov fase_atual, 1
+    mov game_delay_dx, 3000
+    mov timer_counter, 39
     ; Reposiciona os inimigos
     mov enemy1_x, 90  
     mov enemy1_y, 20

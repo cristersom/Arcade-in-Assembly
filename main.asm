@@ -81,12 +81,10 @@ MainLoop:
     mov random_seed, 12345  ; Seleciona uma seed para melhor spawn dos inimigos 
     
     ; Reposiciona os inimigos para a fase 3
-    mov enemy1_x, 90 
+    mov enemy1_x, 190 
     mov enemy1_y, 20
     mov enemy2_x, 290 
     mov enemy2_y, 40
-    mov enemy3_x, 190
-    mov enemy3_y, 60 
     
     call fase_inicio       ; Vai para a fase 3
     jmp MainLoop           ; Quando finalizar a fase 3, volta para o menu

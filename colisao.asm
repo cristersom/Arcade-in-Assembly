@@ -197,9 +197,18 @@ reseta_nave_aliada proc
     call calcula_posicao
     mov bx, OFFSET sprite_vazio    ; Apaga a nave da coordenada anterior 
     call desenha_13x29
+    cmp fase_atual, 3
+    je .troca_reseta   
     mov player_x, 10  
     mov player_y, 90
+.volta_troca_reseta:
     ret
+    
+.troca_reseta:
+    mov player_x, 10  
+    mov player_y, 50 
+    jmp .volta_troca_reseta
+    
 reseta_nave_aliada endp
 
 ; -------------------------------------------------------------------

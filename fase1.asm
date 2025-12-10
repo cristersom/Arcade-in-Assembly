@@ -7,8 +7,13 @@
 ; Parametros de saida: Gerencia todo o fluxo do jogo, movimentacao e desenho.
 ; -------------------------------------------------------------------
 fase1 proc
-
-    mov tempo_restante, 60               ; Reseta o tempo das fases
+    ; Coordenadas inicias para a nave do jogador em determinada fase
+    cmp fase_atual, 3
+    je .nova_posicao_spawn               ; Na fase 3 o spawn tem que ser mais para cima
+    mov player_x, 10  
+    mov player_y, 90  
+    mov tempo_restante, 60              ; Reseta o tempo das fases
+.volta_nova_posicao_spawn:
     call carrega_hud                     ; Carrega a HUD
     call desenha_superficie_fase         ; Desenha o solo da fase atual
 
@@ -18,6 +23,13 @@ fase1 proc
     call calcula_posicao
     mov bx, OFFSET nave_cacador
     call desenha_13x29
+    jmp JOGO_LOOP
+    
+.nova_posicao_spawn:
+    mov player_x, 10  
+    mov player_y, 50 
+    mov tempo_restante, 60
+    jmp .volta_nova_posicao_spawn
     
 ; Responsavel por tudo que vai acontecer em loop dentro do jogo
 JOGO_LOOP:
@@ -174,6 +186,8 @@ skip_enemy1:
     call respawn_enemy2
     
 skip_enemy2:
+    cmp fase_atual, 3
+    je skip_enemy3
     dec enemy3_x
     cmp enemy3_x, -29
     jg skip_enemy3
@@ -187,9 +201,14 @@ skip_enemy3:
     cmp timer_counter, 0
     jne .pula_timer_update
 
-    ; Considera que 38 execuções equivalem a 1 unidade de tempo
-    mov timer_counter, 38
-    
+    cmp fase_atual, 3
+    je .troca_timer_counter
+    mov timer_counter, 39          ; Considera que 39 execuções equivalem a 1 unidade de tempo para a fase 1 e 2
+    jmp .pula_troca_timer_counter
+.troca_timer_counter:    
+    mov timer_counter, 45          ; Considera que 45 execuções equivalem a 1 unidade de tempo para a fase 3
+.pula_troca_timer_counter:
+
     ; Chama pontuacao por tempo
     call atualiza_score_fase
 
@@ -294,6 +313,9 @@ skip_enemy3:
     call desenha_13x29
 .enemy2_draw_skip:
 
+    cmp fase_atual, 3
+    je .enemy3_draw_skip
+
     mov ax, enemy3_x
     cmp ax, 0
     jl .enemy3_draw_skip
@@ -316,11 +338,15 @@ skip_enemy3:
 .tiro_draw_skip:
     
     ; Seleciona a velocidade da fase
+    cmp fase_atual, 3
+    je velocidade_fase3
+.volta_nova_velocidade:    
     mov ah, 86h
     mov cx, game_delay_cx
     mov dx, game_delay_dx
     int 15h
-
+    
+    
     ; Verifica se o tempo acabou
     mov al, tempo_restante
     cmp al, 0
@@ -328,6 +354,9 @@ skip_enemy3:
 
 jmp JOGO_LOOP
 
+velocidade_fase3:
+    mov game_delay_dx, 0
+    jmp .volta_nova_velocidade  
 ; Reescreve a sprite inteira da nave da fase para a sprite da nave atual
 .mudar_inimigo:  
     mov si, offset nave2
@@ -366,7 +395,10 @@ jmp JOGO_LOOP
 respawn_enemy1 proc
     call random
     xor dx, dx
-    mov cx, 95
+    cmp fase_atual, 3
+    je .muda_limite1
+    mov cx, 95                  ; Limita em y = 104, sendo - 10 + 1 = 95  
+.volta_muda_limite1:    
     div cx
     mov enemy1_y, dx
     add enemy1_y, 10
@@ -382,7 +414,10 @@ respawn_enemy1 endp
 respawn_enemy2 proc
     call random
     xor dx, dx
+    cmp fase_atual, 3
+    je .muda_limite2
     mov cx, 95
+.volta_muda_limite2:    
     div cx
     mov enemy2_y, dx
     add enemy2_y, 10
@@ -395,16 +430,27 @@ respawn_enemy2 endp
 ; Parametros de entrada: Variavel global random_seed
 ; Parametros de saida: Atualiza enemy3_x e enemy3_y
 ; -------------------------------------------------------------------
+    cmp fase_atual, 3
+    je .pula_inimigo
 respawn_enemy3 proc
     call random
     xor dx, dx
-    mov cx, 95
+    mov cx, 95                 
     div cx
     mov enemy3_y, dx
     add enemy3_y, 10
     mov enemy3_x, 291
+.pula_inimigo:
     ret
 respawn_enemy3 endp
+
+; Muda o limite de onde os inimigos podem spawnar na fase 3
+.muda_limite1:
+    mov cx, 51              ; Limita em y = 60, sendo - 10 + 1 = 51   
+    jmp .volta_muda_limite1
+.muda_limite2:
+    mov cx, 51              ; Limita em y = 60, sendo - 10 + 1 = 51   
+    jmp .volta_muda_limite2    
     
 ; -------------------------------------------------------------------
 ; Funcao: Atualiza o texto do tempo restante na HUD

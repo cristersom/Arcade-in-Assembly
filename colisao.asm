@@ -201,3 +201,149 @@ reseta_nave_aliada proc
     mov player_y, 90
     ret
 reseta_nave_aliada endp
+
+; -------------------------------------------------------------------
+; Funcao: Verifica se o tiro atingiu algum inimigo.
+; Parametros de entrada: Variaveis tiro_x, tiro_y, enemyX_pos.
+; Parametros de saida: Remove inimigo, soma pontos ou desativa tiro.
+; -------------------------------------------------------------------
+verifica_colisao_tiro proc
+    cmp tiro_ativo, 1
+    je .inicio_checa_colisao 
+    jmp .fim_colisao         
+
+.inicio_checa_colisao:
+    ; Inimigo 1
+    mov ax, tiro_x
+    cmp ax, enemy1_x
+    jl .checa_e2
+    mov bx, enemy1_x
+    add bx, 29
+    cmp ax, bx
+    jg .checa_e2
+    mov ax, tiro_y
+    cmp ax, enemy1_y
+    jl .checa_e2
+    mov bx, enemy1_y
+    add bx, 13
+    cmp ax, bx
+    jg .checa_e2
+
+    ; HIT Inimigo 1 detectado
+    ; Verifica Fase
+    cmp fase_atual, 2
+    je .hit_fase2_e1
+    
+    mov ax, enemy1_y
+    mov dx, enemy1_x
+    call calcula_posicao
+    mov bx, OFFSET sprite_vazio
+    call desenha_13x29
+    
+    ; Fase 1 ou 3 (Destrutivel)
+    call respawn_enemy1
+    mov tiro_ativo, 0
+    cmp fase_atual, 3
+    je .pontos_fase3_e1
+    
+    ; Fase 1 (100 pontos)
+    call soma_100_pontos
+    jmp .fim_colisao
+
+    .pontos_fase3_e1:
+    call soma_150_pontos
+    jmp .fim_colisao
+
+    .hit_fase2_e1:
+    ; Fase 2 (Indestrutivel)
+    mov tiro_ativo, 0 ; Tiro some, meteoro fica
+    jmp .fim_colisao
+
+.checa_e2:
+    ; --- Inimigo 2 ---
+    mov ax, tiro_x
+    cmp ax, enemy2_x
+    jl .checa_e3
+    mov bx, enemy2_x
+    add bx, 29
+    cmp ax, bx
+    jg .checa_e3
+    mov ax, tiro_y
+    cmp ax, enemy2_y
+    jl .checa_e3
+    mov bx, enemy2_y
+    add bx, 13
+    cmp ax, bx
+    jg .checa_e3
+
+    ; HIT Inimigo 2 detectado
+    cmp fase_atual, 2
+    je .hit_fase2_e2
+    
+    mov ax, enemy2_y
+    mov dx, enemy2_x
+    call calcula_posicao
+    mov bx, OFFSET sprite_vazio
+    call desenha_13x29
+    
+    call respawn_enemy2
+    mov tiro_ativo, 0
+    cmp fase_atual, 3
+    je .pontos_fase3_e2
+    call soma_100_pontos
+    jmp .fim_colisao
+
+    .pontos_fase3_e2:
+    call soma_150_pontos
+    jmp .fim_colisao
+
+    .hit_fase2_e2:
+    mov tiro_ativo, 0
+    jmp .fim_colisao
+
+.checa_e3:
+    ; --- Inimigo 3 ---
+    mov ax, tiro_x
+    cmp ax, enemy3_x
+    jl .fim_colisao
+    mov bx, enemy3_x
+    add bx, 29
+    cmp ax, bx
+    jg .fim_colisao
+    mov ax, tiro_y
+    cmp ax, enemy3_y
+    jl .fim_colisao
+    mov bx, enemy3_y
+    add bx, 13
+    cmp ax, bx
+    jg .fim_colisao
+
+    ; HIT Inimigo 3 detectado
+    cmp fase_atual, 2
+    je .hit_fase2_e3
+    
+    mov ax, enemy3_y
+    mov dx, enemy3_x
+    call calcula_posicao
+    mov bx, OFFSET sprite_vazio
+    call desenha_13x29
+    
+    call respawn_enemy3
+    mov tiro_ativo, 0
+    cmp fase_atual, 3
+    je .pontos_fase3_e3
+    call soma_100_pontos
+    jmp .fim_colisao
+
+    .pontos_fase3_e3:
+    call soma_150_pontos
+    jmp .fim_colisao
+
+    .hit_fase2_e3:
+    mov tiro_ativo, 0
+    jmp .fim_colisao
+
+.fim_colisao:
+    ret
+verifica_colisao_tiro endp
+

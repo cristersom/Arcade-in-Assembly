@@ -355,4 +355,3 @@ verifica_colisao_tiro proc
 .fim_colisao:
     ret
 verifica_colisao_tiro endp
-

@@ -36,7 +36,7 @@ checa_enemy1:
     jle sem1
 
     ; Se a colisao for detectada, diminui uma vida e reposiciona a nave aliada
-    [cite_start]dec qtd_vidas [cite: 106, 124]
+    dec qtd_vidas
     call reseta_nave_aliada 
     call perde_vida
     
@@ -243,7 +243,7 @@ verifica1:
 ; Se ele tiver 0 vidas, ele vai para a tela de Game Over
 verifica0:
     cmp qtd_vidas, 0
-    [cite_start]mov player_morto, 1 [cite: 150]
+    mov player_morto, 1
     call fase_inicio
 
 fim_perde_vida:
@@ -321,16 +321,16 @@ verifica_colisao_tiro proc
     je .pontos_fase3_e1
     
     ; Fase 1 (100 pontos)
-    [cite_start]call soma_100_pontos [cite: 101]
+    call soma_100_pontos
     jmp .fim_colisao
 
     .pontos_fase3_e1:
-    [cite_start]call soma_150_pontos [cite: 136]
+    call soma_150_pontos
     jmp .fim_colisao
 
     .hit_fase2_e1:
     ; Fase 2 (Indestrutivel)
-    mov tiro_ativo, 0 ; [cite_start]Tiro some, meteoro fica [cite: 122]
+    mov tiro_ativo, 0 ; Tiro some, meteoro fica
     jmp .fim_colisao
 
 .checa_e2:

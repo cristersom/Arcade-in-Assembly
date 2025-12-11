@@ -6,7 +6,7 @@
 include dados.asm     ; Variaveis, constantes e sprites
 include desenha.asm   ; Rotinas de desenho na tela
 include telas.asm     ; Telas do jogo (menu, game over, vitoria, etc.)
-include fase1.asm     ; Logica e execucao das fases do jogo
+include fases.asm     ; Logica e execucao das fases do jogo
 include colisao.asm   ; Rotinas de deteccao de colisao
 
 .code
@@ -31,6 +31,12 @@ MainLoop:
     mov fase_atual, 1
     mov game_delay_dx, 3000
     mov timer_counter, 39
+    mov altura_atual_predios, 76
+    mov contador_predios, 0
+    mov total_linhas, 128
+    mov indice, 2
+    mov largura_sprite_tela, 72
+    
     ; Reposiciona os inimigos
     mov enemy1_x, 90  
     mov enemy1_y, 20

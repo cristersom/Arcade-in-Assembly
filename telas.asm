@@ -403,7 +403,7 @@ fase_inicio proc
     je .fim_fase
     cmp player_venceu, 1  ; Se o player venceu acaba o jogo
     je .fim_fase
-    call fase1            ; Se o player estiver vivo e nao acabou o jogo, continua normalmente 
+    call fases            ; Se o player estiver vivo e nao acabou o jogo, continua normalmente 
         
 ; Volta para o menu quando acabar a fase
 .fim_fase:

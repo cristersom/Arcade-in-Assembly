@@ -24,6 +24,14 @@ main:
     
 ; Loop do programa   
 MainLoop:
+    ; --- CORRECAO CRITICA: Reseta a pilha e segmentos ao reiniciar ---
+    ; Isso impede que o lixo de memoria faca o jogo pular fases
+    mov ax, @data
+    mov ds, ax
+    mov es, ax
+    mov sp, 0100h   ; Reseta o Stack Pointer para o topo (tamanho definido em .stack)
+    ; ---------------------------------------------------------------
+
     ; Zera os status caso o jogador queira jogar novamente
     mov player_morto, 0
     mov player_venceu, 0
@@ -36,6 +44,10 @@ MainLoop:
     mov total_linhas, 128
     mov indice, 2
     mov largura_sprite_tela, 72
+    
+    ; --- CORRECAO: Reseta a largura dos predios ---
+    mov largura_predios, 0 
+    ; ----------------------------------------------
     
     ; Reposiciona os inimigos
     mov enemy1_x, 90  

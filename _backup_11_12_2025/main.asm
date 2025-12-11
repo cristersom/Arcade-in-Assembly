@@ -58,7 +58,7 @@ MainLoop:
     mov byte ptr [campo3+4], '0'
     
     call fase_inicio    ; Comeca a fase 1
-    jmp .Fase2          ; Pula para fase 2 quando acabar a 1
+    jmp .Fase2          ; Pula para fase 2
     
 ; Sai do modo de video
 .SairDoJogo:
@@ -79,7 +79,7 @@ MainLoop:
     mov enemy3_x, 290 
     mov enemy3_y, 90
     
-    call fase_inicio        ; Comeca a fase 2
+    call fase_inicio        ; Comeca a fase 2  
     
 ; Dados da fase 3    
 .Fase3:
@@ -93,7 +93,7 @@ MainLoop:
     mov enemy2_y, 40
     
     call fase_inicio       ; Vai para a fase 3
-    jmp MainLoop           ; Quando finalizar a fase 3 (vitoria ou derrota), volta para o menu
+    jmp MainLoop           ; Quando finalizar a fase 3, volta para o menu
 
 ; -------------------------------------------------------------------
 ; Funcao: Inicia o modo de video VGA 320x200 (Modo 13h)

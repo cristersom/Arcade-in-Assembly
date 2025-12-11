@@ -13,7 +13,7 @@ fases proc
     mov player_x, 10  
     mov player_y, 90  
 .volta_nova_posicao_spawn:
-    mov tempo_restante, 60               ; Tempo padrao de 60 segundos
+    mov tempo_restante, 60               ; Reseta o tempo das fases
     call carrega_hud                     ; Carrega a HUD  
 
     ; Desenha o jogador na posicao inicial
@@ -116,7 +116,7 @@ sprite_linha endp
     cmp al, 0
     jne .checar_tecla_disparo
     
-    ; Compara para saber se a tecla pressionada ? uma de movimento
+    ; Compara para saber se a tecla pressionada é uma de movimento
     cmp ah, 48H
     je .move_cima
     cmp ah, 50H
@@ -207,10 +207,10 @@ skip_enemy3:
 
     cmp fase_atual, 3
     je .troca_timer_counter
-    mov timer_counter, 39          ; Considera que 39 execu??es equivalem a 1 unidade de tempo para a fase 1 e 2
+    mov timer_counter, 39          ; Considera que 39 execuções equivalem a 1 unidade de tempo para a fase 1 e 2
     jmp .pula_troca_timer_counter
 .troca_timer_counter:    
-    mov timer_counter, 57       ; Considera que 60 execu??es equivalem a 1 unidade de tempo para a fase 3
+    mov timer_counter, 57       ; Considera que 60 execuções equivalem a 1 unidade de tempo para a fase 3
 .pula_troca_timer_counter:
 
     ; Chama pontuacao por tempo
@@ -284,7 +284,7 @@ skip_enemy3:
     jne .nao_mudar_inimigo     
     jmp .mudar_inimigo 
     
-; Fase 1 e 3 n?o muda o inimigo    
+; Fase 1 e 3 não muda o inimigo    
 .nao_mudar_inimigo:
     mov si, offset nave1
     mov di, offset nave_atual

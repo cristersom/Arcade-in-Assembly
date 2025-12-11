@@ -1,6 +1,5 @@
 ;desenha.asm
 .code
-
 ; -------------------------------------------------------------------
 ; Funcao: Converte coordenadas X/Y para offset de memoria de video (Y*320+X).
 ; Parametros de entrada: AX = Y (Linha), DX = X (Coluna).
@@ -314,7 +313,120 @@ desenha_superficie_fase endp
 .mudar_cor_superficie:
     mov al, 6                           ; Cor marrom
     jmp .continuar_mudar_cor_superficie
+    
+; -------------------------------------------------------------------
+; Desenha o solo da fase 3 na tela, linha por linha, usando a sprite de 24 px.
+; Ajusta a altura e largura conforme os dados dos prédios para formar o terreno.
+; Atualiza registradores de posição e termina quando preencher toda a largura da tela.
+; "NAO FOI POSSIVEL FAZER O SCROLL POIS O 8086 NAO AGUENTAVA"    
+; -------------------------------------------------------------------   
+desenha_superficie_fase3 proc
+    push ax
+    push bx
+    push cx
+    push dx
+    push si
+    push di
+    push ds
+    push es
+    
+loop_solo3:
+    ; Seleção de segmentos 
+    mov ax, @data
+    mov ds, ax
+    mov ax, 0A000h
+    mov es, ax
 
+    ; Sprite da fase 3
+    mov si, OFFSET superficie_fase3  
+
+
+    ; Posicionamento do solo
+    mov ax, altura_atual_predios           ; Y inicial
+    mov dx, largura_predios                ; X inicial
+    call calcula_posicao
+      
+
+    ; Dados da sprite
+    mov bx, 24             ; Largura total da sprite
+    mov cx, total_linhas   ; Quantidade de linhas (alterado para nao aparecer no topo da tela)
+    xor bp, bp             ; Sem scroll (sempre 0)
+
+
+linha_f3_loop:
+    push cx
+    push si
+    push di
+
+    mov cx, largura_sprite_tela  ; Largura que a sprite vai ocupar na tela
+    mov dx, bp                   ; Deslocamento horizontal fixo = 0
+    
+      
+
+coluna_f3_loop:
+    lodsb                  ; Pega byte da sprite
+    stosb                  ; Escreve pixel
+
+    inc dx
+    cmp dx, bx
+    jb f3_no_reset
+
+    sub dx, bx
+    sub si, bx
+
+f3_no_reset:
+
+    loop coluna_f3_loop
+
+    pop di
+    add di, 320            ; Próxima linha da tela
+
+    pop si
+    add si, 24           ; Próxima linha da sprite
+
+    pop cx
+    loop linha_f3_loop
+    
+    push ax
+    push bx
+    xor bx, bx
+    add bx, indice                             ; Prepara o indice para pesquisar na memoira 
+    add indice, 2
+    mov ax, [alturas_predio_f3 + bx]           ; Pega os valores do vetor de altura dos predios
+    add altura_atual_predios, ax
+    mov ax, [menos_linhas_predios + bx]        ; Pega os valores de quantas linhas deixar de escrever 
+    add total_linhas, ax
+    pop bx
+    pop ax
+    cmp contador_predios, 3
+    je .mudar_largura
+    cmp contador_predios, 4
+    je fim_altura_predios
+    inc contador_predios
+    add largura_predios, 72                    ; Foram usadas 3 sprites para cada predio (3*24 = 72
+    jmp loop_solo3
+  
+; Para ocupar o espaco que falta no canto da tela pois 320 nao e divisivel por 24  
+.mudar_largura:
+    mov largura_sprite_tela, 32                ; 32 é o resto que falta no canto
+    inc contador_predios
+    add largura_predios, 72                    ; os outros sempre são 72
+    jmp loop_solo3
+    
+fim_altura_predios:
+    ; Restaurar registradores 
+    pop es
+    pop ds
+    pop di
+    pop si
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    ret
+
+desenha_superficie_fase3 endp    
+    
 ; -------------------------------------------------------------------
 ; Funcao: Carrega os textos e valores iniciais da HUD na tela.
 ; Parametros de entrada: Globais campo1, campo2, campo3, campo4, qtd_vidas.

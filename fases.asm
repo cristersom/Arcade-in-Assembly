@@ -1,4 +1,4 @@
-; fase1.asm
+; fases.asm
 .code
 
 ; -------------------------------------------------------------------
@@ -6,16 +6,15 @@
 ; Parametros de entrada: Variaveis globais de estado do jogo (fase_atual, player_x, etc.).
 ; Parametros de saida: Gerencia todo o fluxo do jogo, movimentacao e desenho.
 ; -------------------------------------------------------------------
-fase1 proc
+fases proc
     ; Coordenadas inicias para a nave do jogador em determinada fase
     cmp fase_atual, 3
     je .nova_posicao_spawn               ; Na fase 3 o spawn tem que ser mais para cima
     mov player_x, 10  
     mov player_y, 90  
-    mov tempo_restante, 60              ; Reseta o tempo das fases
 .volta_nova_posicao_spawn:
-    call carrega_hud                     ; Carrega a HUD
-    call desenha_superficie_fase         ; Desenha o solo da fase atual
+    mov tempo_restante, 60               ; Reseta o tempo das fases
+    call carrega_hud                     ; Carrega a HUD  
 
     ; Desenha o jogador na posicao inicial
     mov ax, player_y
@@ -28,15 +27,20 @@ fase1 proc
 .nova_posicao_spawn:
     mov player_x, 10  
     mov player_y, 50 
-    mov tempo_restante, 60
+    call desenha_superficie_fase3        ; Carrega o solo estatico da fase 3
     jmp .volta_nova_posicao_spawn
     
 ; Responsavel por tudo que vai acontecer em loop dentro do jogo
 JOGO_LOOP:
     
-    call verifica_colisao_player         ; Verifica se aconteceu alguma colisao
-    call desenha_superficie_fase         ; Fica scrollando a superficie 
+    cmp fase_atual, 3
+    je .pula_desenha_fase
+    call desenha_superficie_fase
     
+.pula_desenha_fase:
+    
+    call verifica_colisao_player         ; Verifica se aconteceu alguma colisao
+
     ; Apaga Inimigos da posicao anterior
     mov ax, enemy1_y
     mov dx, enemy1_x
@@ -206,7 +210,7 @@ skip_enemy3:
     mov timer_counter, 39          ; Considera que 39 execuções equivalem a 1 unidade de tempo para a fase 1 e 2
     jmp .pula_troca_timer_counter
 .troca_timer_counter:    
-    mov timer_counter, 45          ; Considera que 45 execuções equivalem a 1 unidade de tempo para a fase 3
+    mov timer_counter, 57       ; Considera que 60 execuções equivalem a 1 unidade de tempo para a fase 3
 .pula_troca_timer_counter:
 
     ; Chama pontuacao por tempo
@@ -355,7 +359,7 @@ skip_enemy3:
 jmp JOGO_LOOP
 
 velocidade_fase3:
-    mov game_delay_dx, 0
+    mov game_delay_dx, 15000
     jmp .volta_nova_velocidade  
 ; Reescreve a sprite inteira da nave da fase para a sprite da nave atual
 .mudar_inimigo:  
@@ -679,4 +683,4 @@ propaga_carry_dez_milhar:
 .fim_propaga:
     ret
 
-fase1 endp
+fases endp

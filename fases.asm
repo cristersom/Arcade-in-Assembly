@@ -66,7 +66,11 @@ JOGO_LOOP:
     call sprite_coluna
     jmp .skip
  
-    ; Rotinas internas de limpeza nos rastros das sprites
+; -------------------------------------------------------------------
+; Funcao: Apaga o rastro vertical (coluna) da sprite para evitar sujeira na tela.
+; Parametros de entrada: Coordenadas calculadas previamente em AX/DX.
+; Parametros de saida: Desenha pixels pretos na memoria de video.
+; -------------------------------------------------------------------
 sprite_coluna proc
     call calcula_posicao
     mov bx, OFFSET sprite_coluna_vazia
@@ -74,6 +78,11 @@ sprite_coluna proc
     ret
 sprite_coluna endp
 
+; -------------------------------------------------------------------
+; Funcao: Apaga o rastro horizontal (linha) da sprite.
+; Parametros de entrada: Coordenadas calculadas previamente em AX/DX.
+; Parametros de saida: Desenha pixels pretos na memoria de video.
+; -------------------------------------------------------------------
 sprite_linha proc
     call calcula_posicao
     mov bx, OFFSET sprite_linha_vazia
@@ -116,7 +125,7 @@ sprite_linha endp
     cmp al, 0
     jne .checar_tecla_disparo
     
-    ; Compara para saber se a tecla pressionada ? uma de movimento
+    ; Compara para saber se a tecla pressionada é uma de movimento
     cmp ah, 48H
     je .move_cima
     cmp ah, 50H
@@ -207,10 +216,10 @@ skip_enemy3:
 
     cmp fase_atual, 3
     je .troca_timer_counter
-    mov timer_counter, 39          ; Considera que 39 execu??es equivalem a 1 unidade de tempo para a fase 1 e 2
+    mov timer_counter, 39          ; Considera que 39 execuções equivalem a 1 unidade de tempo para a fase 1 e 2
     jmp .pula_troca_timer_counter
 .troca_timer_counter:    
-    mov timer_counter, 57       ; Considera que 60 execu??es equivalem a 1 unidade de tempo para a fase 3
+    mov timer_counter, 57       ; Considera que 60 execuções equivalem a 1 unidade de tempo para a fase 3
 .pula_troca_timer_counter:
 
     ; Chama pontuacao por tempo
@@ -284,7 +293,7 @@ skip_enemy3:
     jne .nao_mudar_inimigo     
     jmp .mudar_inimigo 
     
-; Fase 1 e 3 n?o muda o inimigo    
+; Fase 1 e 3 não muda o inimigo    
 .nao_mudar_inimigo:
     mov si, offset nave1
     mov di, offset nave_atual
@@ -613,6 +622,11 @@ atualiza_hud_pontuacao endp
 ; === MATEMATICA SCORE ===
 ; (Funcoes auxiliares de soma e carry para string de score)
 
+; -------------------------------------------------------------------
+; Funcao: Adiciona 5 unidades ao score (para pontos quebrados).
+; Parametros de entrada: Variavel global campo3 (offset 4).
+; Parametros de saida: Atualiza campo3 e propaga carry se necessario.
+; -------------------------------------------------------------------
 adiciona_unidade_5:
     mov bx, 4           
     add byte ptr [campo3 + bx], 5
@@ -623,6 +637,11 @@ adiciona_unidade_5:
 .fim_soma_u:
     ret
 
+; -------------------------------------------------------------------
+; Funcao: Adiciona 1 dezena ao score.
+; Parametros de entrada: Variavel global campo3 (offset 3).
+; Parametros de saida: Atualiza campo3 e propaga carry se necessario.
+; -------------------------------------------------------------------
 adiciona_dezena_1:
     mov bx, 3           
     inc byte ptr [campo3 + bx]
@@ -633,6 +652,11 @@ adiciona_dezena_1:
 .fim_soma_d:
     ret
 
+; -------------------------------------------------------------------
+; Funcao: Adiciona 5 dezenas (50 pontos) ao score.
+; Parametros de entrada: Variavel global campo3 (offset 3).
+; Parametros de saida: Atualiza campo3 e propaga carry se necessario.
+; -------------------------------------------------------------------
 adiciona_dezena_5:
     mov bx, 3
     add byte ptr [campo3 + bx], 5
@@ -643,6 +667,11 @@ adiciona_dezena_5:
 .fim_soma_d5:
     ret
 
+; -------------------------------------------------------------------
+; Funcao: Adiciona 1 centena (100 pontos) ao score.
+; Parametros de entrada: Variavel global campo3 (offset 2).
+; Parametros de saida: Atualiza campo3 e propaga carry se necessario.
+; -------------------------------------------------------------------
 adiciona_centena_1:
     mov bx, 2           
     inc byte ptr [campo3 + bx]
@@ -653,6 +682,11 @@ adiciona_centena_1:
 .fim_soma_c:
     ret
 
+; -------------------------------------------------------------------
+; Funcao: Propaga o carry (vai um) para as dezenas, centenas e milhares.
+; Parametros de entrada: Variavel global campo3.
+; Parametros de saida: Atualiza os digitos superiores do score.
+; -------------------------------------------------------------------
 propaga_carry_dezena:
     mov bx, 3
     inc byte ptr [campo3 + bx]

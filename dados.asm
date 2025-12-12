@@ -130,11 +130,11 @@
     
 ; ============= FASE 3 =============
 
-     alturas_predio_f3 dw 0, 32, 32, -32, -16, -16, 0     ; Valores para mudar a altura dos predios (Y de onde começa a desenhar)
-     menos_linhas_predios dw 0, -32, -32, 32, 16, 16, 0   ; Valor inverso para apagar as linhas de baixo da sprite do predio
+     alturas_predio_f3 dw 0, 32, 32, -32, -16, -16        ; Valores para mudar a altura dos predios (Y de onde come?a a desenhar)
+     menos_linhas_predios dw 0, -32, -32, 32, 16, 16      ; Valor inverso para apagar as linhas de baixo da sprite do predio
      indice dw 2                                          ; Indice para acessar os vetores acima 
      largura_predios dw 0                                 ; Deslocamento em X de onde vai ser desenhado o proximo predio
-     altura_atual_predios dw 76                           ; Y de onde começa a desenhar o predio
+     altura_atual_predios dw 76                           ; Y de onde come?a a desenhar o predio
      contador_predios dw 0                                ; Contador para saber quantos predios ja foram desenhados
      total_linhas dw 128                                  ; Total de linhas que a sprite tem ou vai ser desenhada
      largura_sprite_tela dw 72                            ; Quantos pixels vao se repetir da sprite na tela

@@ -22,7 +22,7 @@ atualiza_menu proc
     mov bl, 0Fh
     mov cx, TAM_JOGAR_DES
     mov dh, 20
-    mov dl, 0
+    mov dl, 2
     int 10h
     mov bp, OFFSET menu_sair_sel
     mov ah, 13h
@@ -31,7 +31,7 @@ atualiza_menu proc
     mov bl, 0Ch
     mov cx, TAM_SAIR_SEL
     mov dh, 21
-    mov dl, 0
+    mov dl, 2
     int 10h
     jmp .fim
     
@@ -44,7 +44,7 @@ atualiza_menu proc
     mov bl, 0Ch
     mov cx, TAM_JOGAR_SEL
     mov dh, 20
-    mov dl, 0
+    mov dl, 2
     int 10h
     mov bp, OFFSET menu_sair_des
     mov ah, 13h
@@ -53,7 +53,7 @@ atualiza_menu proc
     mov bl, 0Fh
     mov cx, TAM_SAIR_DES
     mov dh, 21
-    mov dl, 0
+    mov dl, 2
     int 10h
 .fim:
     ret

@@ -1,3 +1,4 @@
+
 ; fases.asm
 .code
 
@@ -13,7 +14,7 @@ fases proc
     mov player_x, 10  
     mov player_y, 90  
 .volta_nova_posicao_spawn:
-    mov tempo_restante, 5               ; Tempo padrao de 60 segundos
+    mov tempo_restante, 60               ; Tempo padrao de 60 segundos
     call carrega_hud                     ; Carrega a HUD  
 
     ; Desenha o jogador na posicao inicial
@@ -216,10 +217,10 @@ skip_enemy3:
 
     cmp fase_atual, 3
     je .troca_timer_counter
-    mov timer_counter, 39          ; Considera que 39 execu????es equivalem a 1 unidade de tempo para a fase 1 e 2
+    mov timer_counter, 38         ; Considera que 38 execu????es equivalem a 1 unidade de tempo para a fase 1 e 2
     jmp .pula_troca_timer_counter
 .troca_timer_counter:    
-    mov timer_counter, 57       ; Considera que 60 execu????es equivalem a 1 unidade de tempo para a fase 3
+    mov timer_counter, 57       ; Considera que 57 execu????es equivalem a 1 unidade de tempo para a fase 3
 .pula_troca_timer_counter:
 
     ; Chama pontuacao por tempo

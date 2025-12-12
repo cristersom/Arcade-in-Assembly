@@ -38,16 +38,13 @@ MainLoop:
     mov qtd_vidas, 3
     mov fase_atual, 1
     mov game_delay_dx, 3000
-    mov timer_counter, 39
+    mov timer_counter, 38
     mov altura_atual_predios, 76
     mov contador_predios, 0
     mov total_linhas, 128
     mov indice, 2
     mov largura_sprite_tela, 72
-    
-    ; --- CORRECAO: Reseta a largura dos predios ---
     mov largura_predios, 0 
-    ; ----------------------------------------------
     
     ; Reposiciona os inimigos
     mov enemy1_x, 90  
